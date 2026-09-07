@@ -28,17 +28,13 @@ The monitoring path is designed to remain **passive**. The 1541 continues to exe
 
 T0.0.11 adds software-only RPM measurement using recurrence of decoded physical disk headers. It requires no additional SYNC wire and has been hardware-tested across all four normal 1541 density zones and during an actual Epyx FastLoad game load.
 
-The T0.0.11 checkpoint is preserved by the tag:
-
-`rpm-t011-hardware-proven`
+The T0.0.11 checkpoint is preserved by the tag `rpm-t011-hardware-proven`.
 
 T0.0.11 is a development checkpoint and has not been promoted to V0.0.32.
 
 ---
 
 ## Hardware Architecture
-
-The established configuration uses a OneROM Fire-24-E in a Commodore 1541.
 
 ```text
 Commodore 1541
@@ -94,20 +90,61 @@ See [`docs/RPM-DESIGN-AND-VALIDATION.md`](docs/RPM-DESIGN-AND-VALIDATION.md).
 
 ---
 
-## Future Development
+## Repository Layout
 
-1541HUD is still being actively explored. Planned or candidate work includes:
+The repository root is intentionally 1541HUD-focused.
 
-- **Live sector activity** — identify and display the sector currently being read when reliable passive observation is possible.
-- **Drive/DOS activity state** — expose useful job, command, error, or status information without taking control of the IEC bus.
-- **Improved rotational diagnostics** — expand RPM statistics, stability/variation reporting, and investigate secondary RPM sources for workloads that do not decode headers continuously.
-- **Fastloader compatibility testing** — continue testing JiffyDOS, DolphinDOS, SpeedDOS, Epyx FastLoad, and other loaders to determine what state remains observable under each.
-- **Activity history and logging** — optionally record track movement, motor state, density, RPM, and other events for later analysis.
-- **GUI refinement** — improve the desktop display while keeping the monitor simple, readable, and useful on real hardware.
-- **Broader 1541 diagnostics** — investigate additional passive signals that can reveal drive behavior without adding unnecessary wiring or disturbing normal operation.
-- **Simpler installation and releases** — package proven firmware, matching source, GUI, documentation, and build information so a tested version can be reproduced without reconstructing the development environment.
+```text
+1541HUD/
+├── 1541hud/                  1541HUD builders, GUI and development material
+├── docs/                     1541HUD documentation
+├── OneROM/                   retained OneROM-derived build foundation
+├── Makefile                  thin wrapper delegating OneROM build targets
+├── README.md
+├── RELEASE.md
+└── LICENSE.md
+```
 
-These are research goals, not promises of completed functionality. New features remain experimental until they are tested on real 1541 hardware and shown not to interfere with normal drive operation.
+Important paths:
+
+| Path | Purpose |
+|---|---|
+| `1541hud/` | 1541HUD build scripts, GUI, release documentation and development artifacts |
+| `1541hud/gui/` | Python desktop monitor |
+| `1541hud/development/experiments/` | Preserved T0.0.x experimental construction and diagnostic scripts |
+| `docs/RPM-DESIGN-AND-VALIDATION.md` | RPM research, rejected approaches, implementation and hardware validation |
+| `OneROM/` | OneROM-derived firmware, plugins, Rust tooling, configuration, hardware support and provenance |
+| `OneROM/plugins/user/1541hud-probe/` | Passive 1541 acquisition and decoding plugin |
+| `OneROM/plugins/system/usb/` | USB transport and 1541HUD shared mailbox integration |
+| `OneROM/firmware/src/piodma/pio.c` | Passive firmware integration |
+
+The separation is organizational, not an attempt to hide the dependency. 1541HUD is built on OneROM and keeps the exact derived build foundation in-tree for reproducibility.
+
+---
+
+## Building After the Repository Refactor
+
+The retained OneROM build tree now lives under `OneROM/`.
+
+The root `Makefile` delegates standard OneROM targets into that directory:
+
+```text
+make firmware
+make clean
+```
+
+For 1541HUD firmware builds, use the project-facing wrappers:
+
+```powershell
+.\1541hud\Build-1541HUD-Stable.ps1
+.\1541hud\Build-1541HUD-Current.ps1
+```
+
+`Build-1541HUD-Stable.ps1` invokes the V0.0.31 canonical builder.
+
+`Build-1541HUD-Current.ps1` invokes the T0.0.11 canonical builder.
+
+The underlying version-specific builders are retained unchanged and receive `OneROM/` explicitly through their existing `-Repo` parameter. Historical experimental construction scripts are also preserved unchanged so their source remains traceable to the tests that produced them.
 
 ---
 
@@ -126,37 +163,13 @@ The original OneROM project remains the authoritative source for general OneROM 
 - OneROM website: https://onerom.org
 - Original OneROM repository: https://github.com/piersfinlayson/one-rom
 
----
-
-## Repository Layout
-
-The project-facing 1541HUD work is concentrated here:
-
-| Path | Purpose |
-|---|---|
-| `1541hud/` | 1541HUD build scripts, GUI, release documentation and development artifacts |
-| `1541hud/gui/` | Python desktop monitor |
-| `1541hud/development/experiments/` | Preserved temporary T0.0.x experiment builders and diagnostic construction scripts |
-| `plugins/user/1541hud-probe/` | Passive 1541 acquisition and decoding plugin |
-| `plugins/system/usb/` | USB transport and 1541HUD shared mailbox integration |
-| `firmware/src/piodma/pio.c` | Passive firmware integration |
-| `docs/RPM-DESIGN-AND-VALIDATION.md` | RPM research, rejected approaches, implementation and hardware validation |
-| `upstream/OneROM/` | Clearly separated retained upstream OneROM documentation and provenance material |
-
-Some OneROM build-critical directories such as `firmware/`, `plugins/`, `onerom-config/`, `rust/`, and the top-level `Makefile` remain in their original locations for build compatibility. They are retained because 1541HUD is compiled as part of the OneROM firmware/plugin system. Moving those paths would be a build-system refactor rather than a cosmetic repository cleanup.
+Additional provenance information is kept in [`OneROM/README.md`](OneROM/README.md).
 
 ---
 
 ## RPM Monitoring
 
-1541HUD investigated several possible RPM sources:
-
-- Direct UC2 SYNC monitoring
-- SYNC counting
-- Additional raw PIO/DMA disk-read capture
-- Sector-0 observation
-- DOS NEXTS timing
-- Physical decoded-header recurrence
+1541HUD investigated several possible RPM sources, including direct UC2 SYNC monitoring, SYNC counting, raw PIO/DMA disk-read capture, Sector-0 observation, DOS NEXTS timing and physical decoded-header recurrence.
 
 The final T0.0.11 implementation uses **physical decoded-header recurrence**.
 
@@ -183,11 +196,28 @@ Full design history: [`docs/RPM-DESIGN-AND-VALIDATION.md`](docs/RPM-DESIGN-AND-V
 
 ---
 
+## Future Development
+
+1541HUD is still being actively explored. Planned or candidate work includes:
+
+- **Live sector activity** — identify and display the sector currently being read when reliable passive observation is possible.
+- **Drive/DOS activity state** — expose useful job, command, error, or status information without taking control of the IEC bus.
+- **Improved rotational diagnostics** — expand RPM statistics, stability/variation reporting, and investigate secondary RPM sources for workloads that do not decode headers continuously.
+- **Fastloader compatibility testing** — continue testing JiffyDOS, DolphinDOS, SpeedDOS, Epyx FastLoad, and other loaders to determine what state remains observable under each.
+- **Activity history and logging** — optionally record track movement, motor state, density, RPM, and other events for later analysis.
+- **GUI refinement** — improve the desktop display while keeping the monitor simple, readable, and useful on real hardware.
+- **Broader 1541 diagnostics** — investigate additional passive signals that can reveal drive behavior without adding unnecessary wiring or disturbing normal operation.
+- **Simpler installation and releases** — package proven firmware, matching source, GUI, documentation, and build information so a tested version can be reproduced without reconstructing the development environment.
+
+These are research goals, not promises of completed functionality. New features remain experimental until they are tested on real 1541 hardware and shown not to interfere with normal drive operation.
+
+---
+
 ## Versions
 
 ### V0.0.30
 
-Original immutable hardware-proven DriveHUD acquisition baseline.
+Original immutable hardware-proven acquisition baseline.
 
 ### V0.0.31
 
@@ -195,21 +225,15 @@ Project rename and stable 1541HUD baseline.
 
 ### T0.0.11
 
-Hardware-proven development checkpoint adding physical-header RPM monitoring.
-
-T0.0.11 remains a test/development version until deliberately promoted to a formal release.
+Hardware-proven development checkpoint adding physical-header RPM monitoring. T0.0.11 remains a test/development version until deliberately promoted to a formal release.
 
 ---
 
 ## Development Model
 
-Active development is performed on:
+Active development is performed on `dev-1541hud`.
 
-`dev-1541hud`
-
-The stable release line is kept on:
-
-`main`
+The stable release line remains on `main`.
 
 Hardware experiments use temporary `T0.0.x` versions and preserve their corresponding source so experimental binaries remain traceable.
 
