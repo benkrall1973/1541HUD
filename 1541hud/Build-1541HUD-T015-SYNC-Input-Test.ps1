@@ -266,7 +266,8 @@ if ($LASTEXITCODE -ne 0) { throw "T0.0.15 USER plugin build failed" }
 
 Write-Host "Building T0.0.15 test USB SYSTEM plugin..."
 $usbSrc = "src/usb_descriptors.c src/usb_picobootx.c src/usb_rom.c src/usb_led.c src/usb_gpio.c src/usb_main_t015_sync.c"
-$usbBuild = "cd $RepoQ && make -C plugins/system/usb clean && make -C plugins/system/usb TOOLCHAIN=$ToolchainQ SRC=\"$usbSrc\""
+$usbSrcQ = Quote-Bash $usbSrc
+$usbBuild = "cd $RepoQ && make -C plugins/system/usb clean && make -C plugins/system/usb TOOLCHAIN=$ToolchainQ SRC=$usbSrcQ"
 & wsl bash -lc $usbBuild
 if ($LASTEXITCODE -ne 0) { throw "T0.0.15 USB SYSTEM plugin build failed" }
 
