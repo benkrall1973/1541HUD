@@ -38,6 +38,14 @@ firmware/generated
 !rust/metadata/build
 firmware/ora/onerom_metadata_keys_generated.h
 
+# OneROM tree generated dependencies/build outputs after repository layout refactor
+OneROM/firmware/generated/
+OneROM/firmware/ora/onerom_metadata_keys_generated.h
+OneROM/plugins/system/usb/tinyusb/
+OneROM/plugins/system/usb/tinyusb-old/
+OneROM/plugins/system/usb/picobootx/
+OneROM/plugins/system/usb/pico-sdkless/
+
 dist/
 output/
 !rust/lab-new/src/output/
