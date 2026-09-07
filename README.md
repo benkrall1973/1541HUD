@@ -94,6 +94,23 @@ See [`docs/RPM-DESIGN-AND-VALIDATION.md`](docs/RPM-DESIGN-AND-VALIDATION.md).
 
 ---
 
+## Future Development
+
+1541HUD is still being actively explored. Planned or candidate work includes:
+
+- **Live sector activity** — identify and display the sector currently being read when reliable passive observation is possible.
+- **Drive/DOS activity state** — expose useful job, command, error, or status information without taking control of the IEC bus.
+- **Improved rotational diagnostics** — expand RPM statistics, stability/variation reporting, and investigate secondary RPM sources for workloads that do not decode headers continuously.
+- **Fastloader compatibility testing** — continue testing JiffyDOS, DolphinDOS, SpeedDOS, Epyx FastLoad, and other loaders to determine what state remains observable under each.
+- **Activity history and logging** — optionally record track movement, motor state, density, RPM, and other events for later analysis.
+- **GUI refinement** — improve the desktop display while keeping the monitor simple, readable, and useful on real hardware.
+- **Broader 1541 diagnostics** — investigate additional passive signals that can reveal drive behavior without adding unnecessary wiring or disturbing normal operation.
+- **Simpler installation and releases** — package proven firmware, matching source, GUI, documentation, and build information so a tested version can be reproduced without reconstructing the development environment.
+
+These are research goals, not promises of completed functionality. New features remain experimental until they are tested on real 1541 hardware and shown not to interfere with normal drive operation.
+
+---
+
 ## Relationship to OneROM
 
 1541HUD is an independent derivative project based on **OneROM v0.7.1**.
