@@ -246,7 +246,14 @@ static void drivehud_serial_task(void){
  p=drivehud_append_str(p,e,"DENSITY state=");
  p=drivehud_append_u32(p,e,w&3u);
  p=drivehud_append_str(p,e,"\r\n");
- }else{
+ }else if(type==DRIVEHUD_EVENT_SECTOR0_QUAL){
+ uint32_t track=(w>>21)&0x7Fu;
+ uint32_t timestamp_us_mod=(w&0xFFFFu)<<4;
+ p=drivehud_append_str(p,e,"SECTOR0 T0.0.8 T=");
+ p=drivehud_append_u32(p,e,track);
+ p=drivehud_append_str(p,e," US=");
+ p=drivehud_append_u32(p,e,timestamp_us_mod);
+ p=drivehud_append_str(p,e,"\r\n");}else{
  /* Unknown queue entry: discard it rather than wedging the bridge. */
  m->event_tail=(tail+1u)%DRIVEHUD_EVENT_WORDS;
  continue;
