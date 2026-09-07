@@ -18,17 +18,17 @@ if (!(Test-Path -LiteralPath $Builder)) {
     throw "T0.0.11 canonical builder not found at: $Builder"
 }
 
-$arguments = @(
-    "-Repo", $OneRomRepo,
-    "-Toolchain", $Toolchain,
-    "-Picotool", $Picotool
-)
-
-if (![string]::IsNullOrWhiteSpace($OneRomCli)) {
-    $arguments += @("-OneRomCli", $OneRomCli)
+$builderParams = @{
+    Repo      = $OneRomRepo
+    Toolchain = $Toolchain
+    Picotool  = $Picotool
 }
 
-& $Builder @arguments
+if (![string]::IsNullOrWhiteSpace($OneRomCli)) {
+    $builderParams["OneRomCli"] = $OneRomCli
+}
+
+& $Builder @builderParams
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
