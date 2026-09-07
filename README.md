@@ -1,99 +1,217 @@
-# 1541HUD-OneROM
+# 1541HUD
 
-**1541HUD** is a passive real-time Commodore 1541 drive monitor built on the [OneROM](https://onerom.org) platform.
+**1541HUD** is a passive real-time monitor for the Commodore 1541 disk drive.
 
-The current stable release is **1541HUD V0.0.31**. The previous **DriveHUD V0.0.30** tag is preserved as the immutable hardware-proven baseline.
+It uses a **OneROM Fire-24-E** installed in the 1541 to observe drive activity and send live state to a desktop GUI without taking control of the drive bus.
 
-This repository is an independent derivative of **OneROM v0.7.1**, originally created and maintained by **Piers Finlayson**. It is not a GitHub fork and is not the upstream OneROM project. 1541HUD retains the OneROM source tree because the monitor is built together with the OneROM Fire-24-E firmware and plugin system.
-
-For general OneROM hardware, firmware, documentation, purchasing information, or support, use the original project:
-
-- [OneROM website](https://onerom.org)
-- [Original OneROM GitHub repository](https://github.com/piersfinlayson/one-rom)
-
-## What 1541HUD Does
-
-1541HUD monitors a Commodore 1541 while the drive is operating and presents live drive state in a desktop GUI. The monitor is intentionally **passive**: it observes the 1541 bus but does not drive it.
-
-The proven monitor architecture supports:
+1541HUD currently monitors:
 
 - Track and half-track position
-- Diagnostic-cartridge half-step tracking
-- Spindle motor ON/OFF state
 - Head movement: IN / OUT / STALL / PARK
-- HOME anchoring
+- HOME / track-1 anchoring
+- Spindle motor ON/OFF
 - Write-protect state
-- Hardware density selection D0-D3
-- USB late connection and GUI reconnect
-- RP2350 state caching and STATE resend
+- Hardware density zone D0-D3
+- Drive RPM during physical disk-header activity
+- Diagnostic-cartridge half-step movement
+- USB disconnect/reconnect and late GUI connection
+
+The monitoring path is designed to remain **passive**. The 1541 continues to execute its normal ROM and disk routines while 1541HUD observes activity in parallel.
+
+---
+
+## Current Status
+
+**Stable release:** 1541HUD V0.0.31
+
+**Latest hardware-proven development checkpoint:** T0.0.11 RPM monitoring
+
+T0.0.11 adds software-only RPM measurement using recurrence of decoded physical disk headers. It requires no additional SYNC wire and has been hardware-tested across all four normal 1541 density zones and during an actual Epyx FastLoad game load.
+
+The T0.0.11 checkpoint is preserved by the tag:
+
+`rpm-t011-hardware-proven`
+
+T0.0.11 is a development checkpoint and has not been promoted to V0.0.32.
+
+---
 
 ## Hardware Architecture
 
-The established configuration uses a **OneROM Fire-24-E** in a Commodore 1541:
-
-- **UB3**: normal ROM-serving OneROM
-- **UB4**: dedicated passive 1541HUD monitor
-
-Acquisition is performed with RP2350 PIO/DMA and is independent of USB or GUI timing.
+The established configuration uses a OneROM Fire-24-E in a Commodore 1541.
 
 ```text
-1541 bus activity
-      |
-      v
-RP2350 PIO/DMA capture
-      |
-      v
-1541HUD state decoder/cache
-      |
-      v
-shared mailbox -> USB CDC -> Python GUI
+Commodore 1541
+     |
+     +-- UB3: normal ROM-serving OneROM
+     |
+     +-- UB4: passive 1541HUD monitor
+                  |
+                  v
+            RP2350 PIO/DMA
+                  |
+                  v
+          1541HUD state decoder
+                  |
+                  v
+          shared memory mailbox
+                  |
+                  v
+               USB CDC
+                  |
+                  v
+          Python desktop GUI
 ```
+
+The UB4 monitor observes 6502/VIA activity while UB3 continues to provide the drive ROM.
+
+1541HUD does not replace the 1541 operating system and is not intended to become an IEC controller or active drive emulator.
+
+---
+
+## Proven Monitor Functions
+
+| Function | Status |
+|---|---|
+| Track position | Proven |
+| Half-track position | Proven |
+| Diagnostic cartridge half-steps | Proven |
+| Head IN / OUT | Proven |
+| STALL detection | Proven |
+| PARK indication | Proven |
+| HOME anchoring | Proven |
+| Motor ON/OFF | Proven |
+| Write protect | Proven |
+| Density D0-D3 | Proven |
+| GUI reconnect | Proven |
+| Late USB connection | Proven |
+| State resend/cache | Proven |
+| RPM | Proven in T0.0.11 |
+
+RPM measurement is event-driven by real disk-header decoding. Workloads that only move the head or motor, such as some diagnostic routines, may not generate RPM samples until normal sector reads resume.
+
+See [`docs/RPM-DESIGN-AND-VALIDATION.md`](docs/RPM-DESIGN-AND-VALIDATION.md).
+
+---
+
+## Relationship to OneROM
+
+1541HUD is an independent derivative project based on **OneROM v0.7.1**.
+
+**OneROM was created and is maintained by Piers Finlayson.** OneROM provides the Fire-24-E hardware platform, RP2350 firmware architecture, plugin system, firmware build tooling, CLI tooling, board support, and the core source tree used by this project.
+
+1541HUD adds the Commodore 1541-specific passive acquisition, state decoding, mailbox transport, desktop GUI, RPM monitoring, and related testing/documentation.
+
+This repository is **not the upstream OneROM project**, and it is not intended to present upstream OneROM work as original 1541HUD work.
+
+The original OneROM project remains the authoritative source for general OneROM development, hardware, documentation, and support:
+
+- OneROM website: https://onerom.org
+- Original OneROM repository: https://github.com/piersfinlayson/one-rom
+
+---
 
 ## Repository Layout
 
+The project-facing 1541HUD work is concentrated here:
+
 | Path | Purpose |
 |---|---|
-| [`1541hud/`](1541hud) | 1541HUD build script, project documentation, changelog, release process, and GUI |
-| [`1541hud/gui/1541HUD_V0.0.31_PIO_DMA.py`](1541hud/gui/1541HUD_V0.0.31_PIO_DMA.py) | Current stable GUI entry point |
-| [`plugins/user/1541hud-probe/`](plugins/user/1541hud-probe) | Passive acquisition/decoder USER plugin |
-| [`plugins/system/usb/`](plugins/system/usb) | USB SYSTEM plugin with 1541HUD mailbox transport |
-| [`firmware/src/piodma/pio.c`](firmware/src/piodma/pio.c) | Passive firmware integration |
-| [`1541hud/Build-1541HUD-V031.ps1`](1541hud/Build-1541HUD-V031.ps1) | Canonical V0.0.31 build script |
+| `1541hud/` | 1541HUD build scripts, GUI, release documentation and development artifacts |
+| `1541hud/gui/` | Python desktop monitor |
+| `1541hud/development/experiments/` | Preserved temporary T0.0.x experiment builders and diagnostic construction scripts |
+| `plugins/user/1541hud-probe/` | Passive 1541 acquisition and decoding plugin |
+| `plugins/system/usb/` | USB transport and 1541HUD shared mailbox integration |
+| `firmware/src/piodma/pio.c` | Passive firmware integration |
+| `docs/RPM-DESIGN-AND-VALIDATION.md` | RPM research, rejected approaches, implementation and hardware validation |
+| `upstream/OneROM/` | Clearly separated retained upstream OneROM documentation and provenance material |
 
-The rest of the repository largely remains the upstream OneROM v0.7.1 foundation required to build, test, and maintain 1541HUD. Upstream documentation and tooling are intentionally retained rather than copied into a separate vendored snapshot.
+Some OneROM build-critical directories such as `firmware/`, `plugins/`, `onerom-config/`, `rust/`, and the top-level `Makefile` remain in their original locations for build compatibility. They are retained because 1541HUD is compiled as part of the OneROM firmware/plugin system. Moving those paths would be a build-system refactor rather than a cosmetic repository cleanup.
 
-## Which Documentation to Use
+---
 
-For 1541HUD itself, use these files first:
+## RPM Monitoring
 
-- [`1541hud/README.md`](1541hud/README.md) for build, architecture, and reproducibility details.
-- [`1541hud/CHANGELOG.md`](1541hud/CHANGELOG.md) for 1541HUD/DriveHUD release history.
-- [`1541hud/RELEASE.md`](1541hud/RELEASE.md) for the 1541HUD release process.
+1541HUD investigated several possible RPM sources:
 
-The repository root `CHANGELOG.md`, much of `docs/`, and other retained OneROM material describe the upstream OneROM foundation. They remain for provenance, build support, and future upstream comparison; they are not the 1541HUD release history or release procedure.
+- Direct UC2 SYNC monitoring
+- SYNC counting
+- Additional raw PIO/DMA disk-read capture
+- Sector-0 observation
+- DOS NEXTS timing
+- Physical decoded-header recurrence
 
-## Versioning
+The final T0.0.11 implementation uses **physical decoded-header recurrence**.
 
-- **`v0.0.30`**: immutable DriveHUD hardware-proven baseline.
-- **`v0.0.31`**: current stable 1541HUD release and project rename baseline.
-- Future development starts from V0.0.31 and should preserve the passive-monitor invariants unless a change is deliberately tested and documented.
+The 1541 writes decoded header fields to RAM in this sequence:
 
-Tags are not moved or rewritten after release.
+```text
+$18 -> $19 -> $1A -> $17 -> $16
+```
 
-## Relationship to Upstream OneROM
+1541HUD recognizes that sequence, timestamps the physical header, and measures recurrence of the same track and sector.
 
-1541HUD-OneROM is based on **OneROM v0.7.1** and intentionally retains upstream history and source structure. Upstream OneROM remains the authority for general OneROM development.
+Hardware validation produced approximately:
 
-Future upstream releases should be evaluated and incorporated deliberately rather than automatically merged into the stable 1541HUD line.
+| Track | Density | RPM |
+|---:|:---:|---:|
+| 1 | D3 | 300.40-300.42 |
+| 18 | D2 | 300.46 |
+| 25 | D1 | 300.47 |
+| 35 | D0 | 300.44 |
+
+An actual Epyx FastLoad game load also produced valid RPM while the head was actively seeking.
+
+Full design history: [`docs/RPM-DESIGN-AND-VALIDATION.md`](docs/RPM-DESIGN-AND-VALIDATION.md).
+
+---
+
+## Versions
+
+### V0.0.30
+
+Original immutable hardware-proven DriveHUD acquisition baseline.
+
+### V0.0.31
+
+Project rename and stable 1541HUD baseline.
+
+### T0.0.11
+
+Hardware-proven development checkpoint adding physical-header RPM monitoring.
+
+T0.0.11 remains a test/development version until deliberately promoted to a formal release.
+
+---
+
+## Development Model
+
+Active development is performed on:
+
+`dev-1541hud`
+
+The stable release line is kept on:
+
+`main`
+
+Hardware experiments use temporary `T0.0.x` versions and preserve their corresponding source so experimental binaries remain traceable.
+
+Hardware success is not treated as proven until tested on a real Commodore 1541.
+
+---
 
 ## Credits
 
-**OneROM** was created by **Piers Finlayson**. 1541HUD depends on the OneROM Fire hardware, firmware architecture, plugin system, CLI tooling, and associated open-source work.
+**OneROM** was created by **Piers Finlayson**.
 
-1541HUD is an independent derivative project focused specifically on passive Commodore 1541 monitoring.
+1541HUD depends heavily on his work and on the OneROM hardware, firmware, plugin architecture, and tooling. Upstream material is retained deliberately for provenance and reproducibility.
+
+---
 
 ## License
 
-This repository retains the upstream OneROM licensing structure and notices. Software and firmware are licensed under the MIT License, while applicable hardware design files use the CERN Open Hardware Licence Version 2 - Weakly Reciprocal.
+This repository retains the upstream OneROM licensing structure and notices.
 
-See [`LICENSE.md`](LICENSE.md) for the complete license terms and copyright notices.
+Software and firmware are licensed under the MIT License. Applicable hardware design files use the CERN Open Hardware Licence Version 2 - Weakly Reciprocal.
+
+See [`LICENSE.md`](LICENSE.md).
