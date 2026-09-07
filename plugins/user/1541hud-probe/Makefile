@@ -1,5 +1,5 @@
 PLUGIN_NAME := user/1541hud-probe
-PLUGIN_SRC := src/1541hud_probe_t008.c
+PLUGIN_SRC := src/1541hud_probe_t011.c
 PLUGIN_TYPE := USER
 
 BUILD_DIR := build

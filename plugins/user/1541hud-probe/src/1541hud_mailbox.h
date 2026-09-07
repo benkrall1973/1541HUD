@@ -26,7 +26,8 @@
 #define HUD1541_EVENT_WRITE_PROTECT 4u
 #define HUD1541_EVENT_DENSITY 5u
 
-#define HUD1541_EVENT_SECTOR0_QUAL 6u
+#define HUD1541_EVENT_HDRPHY_DIAG 6u
+#define HUD1541_EVENT_RPM_DIAG 7u
 typedef struct {
  volatile uint32_t magic;
  volatile uint32_t version;
