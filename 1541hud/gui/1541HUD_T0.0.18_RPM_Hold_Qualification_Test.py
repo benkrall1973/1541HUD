@@ -24,12 +24,12 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
       * After a seek, require two mutually-consistent fresh RPM samples from
         the same decoded header track before replacing the held value.
       * A large RPM jump while otherwise locked also enters qualification, but
-        the new speed is accepted when two fresh samples agree.  This rejects a
+        the new speed is accepted when two fresh samples agree. This rejects a
         one-off acquisition artifact without hiding a genuine spindle change.
       * Raw PB7/SYNC remains independent corroborating telemetry and is never a
         gate for accepting RPM.
 
-    This is intentionally a display/qualification experiment.  It does not
+    This is intentionally a display/qualification experiment. It does not
     alter PIO, DMA, mailbox layout, physical SYNC counting, or T0.0.15 firmware.
     """
 
@@ -37,6 +37,7 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
     CANDIDATE_AGREE_RPM = 1.50
     LARGE_RPM_JUMP = 5.00
     SEEK_SETTLE_SEC = 0.25
+    DISPLAY_FIRMWARE = "T0.0.15"
 
     def __init__(self, root):
         super().__init__(root)
@@ -52,11 +53,15 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
         self.root.geometry("700x760")
         self.root.minsize(700, 760)
 
+        # The inherited core reports its acquisition-core protocol as V0.0.30.
+        # This test actually runs the T0.0.15 integrated firmware, so present
+        # the build identity that corresponds to the flashed image.
+        self.fw_var.set(f"Firmware: {self.DISPLAY_FIRMWARE}")
+
         self.rpm_var = tk.StringVar(value="---.--")
         self.rpm_state_var = tk.StringVar(value="NO SAMPLE")
         self.sector_var = tk.StringVar(value="--")
         self.sync_var = tk.StringVar(value="0")
-        self.sync_level_var = tk.StringVar(value="1")
         self.sync_rev_est_var = tk.StringVar(value="--.--")
 
         self.last_good_rpm = None
@@ -83,8 +88,6 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
         sync_frame.pack(fill="x", padx=18, pady=(0, 8))
         ttk.Label(sync_frame, text="SYNC / SEC", font=("Segoe UI", 12, "bold")).pack(side="left", padx=(12, 28))
         ttk.Label(sync_frame, textvariable=self.sync_var, font=("Consolas", 22, "bold")).pack(side="left")
-        ttk.Label(sync_frame, text="LEVEL", font=("Segoe UI", 10, "bold")).pack(side="left", padx=(28, 8))
-        ttk.Label(sync_frame, textvariable=self.sync_level_var, font=("Consolas", 14, "bold")).pack(side="left")
 
         estimate_frame = ttk.Frame(self.root)
         estimate_frame.pack(fill="x", padx=18, pady=(0, 8))
@@ -154,7 +157,7 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
         return (time.monotonic() - self.last_seek_time) >= self.SEEK_SETTLE_SEC
 
     def update_sync_rev_estimate(self):
-        # The one-second SYNC window and RPM sample are independent.  During
+        # The one-second SYNC window and RPM sample are independent. During
         # hold/reacquisition the displayed RPM is deliberately stale, so do not
         # manufacture a misleading ratio from old RPM and new SYNC telemetry.
         if (
@@ -180,7 +183,7 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
             return
 
         # The firmware already clears recurrence history on every real phase
-        # change.  The GUI additionally refuses queued/early RPM updates until
+        # change. The GUI additionally refuses queued/early RPM updates until
         # the physical seek has been quiet briefly.
         if not self.seek_is_settled():
             self.begin_reacquire("SEEK")
@@ -259,7 +262,6 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
         if m:
             self.latest_sync = int(m.group(1))
             self.sync_var.set(m.group(1))
-            self.sync_level_var.set(m.group(2))
             self.update_sync_rev_estimate()
             return
 
@@ -283,6 +285,11 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
             return
 
         super().process_line(line)
+
+        # The inherited STATE/STATUS parser reports its V0.0.30 acquisition
+        # protocol. Keep the visible firmware identity tied to the actual
+        # T0.0.15 image under test instead of exposing that internal baseline.
+        self.fw_var.set(f"Firmware: {self.DISPLAY_FIRMWARE}")
 
 
 if __name__ == "__main__":
