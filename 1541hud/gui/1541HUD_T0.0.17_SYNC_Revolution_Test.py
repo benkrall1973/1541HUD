@@ -4,34 +4,24 @@ from tkinter import ttk
 
 from hud_core_v030 import DriveHUD as _ProvenDriveHUDCore
 
-rpm_re = re.compile(
-    r"RPM\s+T0\.0\.11\s+T=(\d+)\s+REV=(\d+)\s+RPM=(\d+\.\d{2})"
-)
-hdrphy_re = re.compile(
-    r"HDRPHY\s+T0\.0\.11\s+T=(\d+)\s+S=(\d+)\s+US=(\d+)"
-)
-sync_re = re.compile(
-    r"SYNC\s+T0\.0\.15\s+COUNT=(\d+)\s+LEVEL=([01])"
-)
+rpm_re = re.compile(r"RPM\s+T0\.0\.11\s+T=(\d+)\s+REV=(\d+)\s+RPM=(\d+\.\d{2})")
+hdrphy_re = re.compile(r"HDRPHY\s+T0\.0\.11\s+T=(\d+)\s+S=(\d+)\s+US=(\d+)")
+sync_re = re.compile(r"SYNC\s+T0\.0\.15\s+COUNT=(\d+)\s+LEVEL=([01])")
 
 
 class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
-    """T0.0.17 clean validation GUI using proven T0.0.15 telemetry.
-
-    This GUI deliberately does not pretend the one-second SYNC window and an
-    HDRPHY RPM sample are synchronous.  It displays the two independent raw
-    measurements side by side and derives only an explicitly labelled
-    estimate.  The purpose is to catch HDRPHY RPM outliers during real loads
-    while preserving the hardware-proven T0.0.15 firmware unchanged.
-    """
+    """T0.0.17 clean validation GUI using proven T0.0.15 telemetry."""
 
     FIFO_SIZE = 10
 
     def __init__(self, root):
         super().__init__(root)
         self.root.title("1541HUD T0.0.17 - Clean SYNC / RPM Validation")
-        self.root.geometry("680x860")
-        self.root.minsize(680, 860)
+        # Windows display scaling makes the inherited core taller than Tk's
+        # nominal geometry.  Reserve enough client height for the FIFO values,
+        # not merely the RECENT SECTORS heading.
+        self.root.geometry("700x960")
+        self.root.minsize(700, 960)
 
         self.rpm_var = tk.StringVar(value="---.--")
         self.sector_var = tk.StringVar(value="--")
@@ -39,7 +29,6 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
         self.sync_level_var = tk.StringVar(value="1")
         self.sync_rev_est_var = tk.StringVar(value="--.--")
         self.status_var = tk.StringVar(value="WAITING")
-
         self.latest_rpm = None
         self.latest_sync = None
         self.sector_fifo = []
@@ -50,18 +39,14 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
 
         sync_frame = ttk.Frame(self.root)
         sync_frame.pack(fill="x", padx=18, pady=(0, 8))
-        ttk.Label(sync_frame, text="SYNC / SEC", font=("Segoe UI", 12, "bold")).pack(
-            side="left", padx=(12, 28)
-        )
+        ttk.Label(sync_frame, text="SYNC / SEC", font=("Segoe UI", 12, "bold")).pack(side="left", padx=(12, 28))
         ttk.Label(sync_frame, textvariable=self.sync_var, font=("Consolas", 22, "bold")).pack(side="left")
         ttk.Label(sync_frame, text="LEVEL", font=("Segoe UI", 10, "bold")).pack(side="left", padx=(28, 8))
         ttk.Label(sync_frame, textvariable=self.sync_level_var, font=("Consolas", 14, "bold")).pack(side="left")
 
         estimate_frame = ttk.Frame(self.root)
         estimate_frame.pack(fill="x", padx=18, pady=(0, 6))
-        ttk.Label(estimate_frame, text="SYNC / REV EST", font=("Segoe UI", 12, "bold")).pack(
-            side="left", padx=(12, 18)
-        )
+        ttk.Label(estimate_frame, text="SYNC / REV EST", font=("Segoe UI", 12, "bold")).pack(side="left", padx=(12, 18))
         ttk.Label(estimate_frame, textvariable=self.sync_rev_est_var, font=("Consolas", 22, "bold")).pack(side="left")
         ttk.Label(estimate_frame, text="1 s raw window / latest HDRPHY RPM", font=("Segoe UI", 9)).pack(side="left", padx=(14, 0))
 
@@ -70,21 +55,14 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
         ttk.Label(state_frame, text="CORRELATION", font=("Segoe UI", 10, "bold")).pack(side="left", padx=(12, 14))
         ttk.Label(state_frame, textvariable=self.status_var, font=("Consolas", 11, "bold")).pack(side="left")
 
-        fifo_frame = ttk.Frame(self.root)
-        fifo_frame.pack(fill="x", padx=18, pady=(4, 10))
-        ttk.Label(fifo_frame, text="RECENT SECTORS", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(0, 5))
+        fifo_frame = ttk.LabelFrame(self.root, text="RECENT SECTORS")
+        fifo_frame.pack(fill="x", padx=30, pady=(6, 20), ipady=8)
         fifo_row = ttk.Frame(fifo_frame)
-        fifo_row.pack(fill="x", padx=12)
+        fifo_row.pack(fill="x", padx=10, pady=8)
         self.fifo_vars = []
         for _ in range(self.FIFO_SIZE):
             var = tk.StringVar(value="")
-            ttk.Label(
-                fifo_row,
-                textvariable=var,
-                width=3,
-                anchor="center",
-                font=("Consolas", 16, "bold"),
-            ).pack(side="left", padx=3)
+            ttk.Label(fifo_row, textvariable=var, width=3, anchor="center", font=("Consolas", 16, "bold")).pack(side="left", padx=3)
             self.fifo_vars.append(var)
 
     def _add_value_row(self, label, variable):
@@ -120,7 +98,6 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
             return
         value = (self.latest_sync * 60.0) / self.latest_rpm
         self.sync_rev_est_var.set(f"{value:.2f}")
-        # Flag large RPM departures without declaring which source is wrong.
         if self.latest_rpm < 295.0 or self.latest_rpm > 305.0:
             self.status_var.set("RPM OUTLIER - CHECK RAW SYNC")
         else:
@@ -155,7 +132,6 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
             self.sync_level_var.set(m.group(2))
             self.update_estimate()
             return
-
         m = hdrphy_re.search(line)
         if m:
             if self.motor_on:
@@ -164,7 +140,6 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
                 self.sector_var.set(f"{sector:02d}")
                 self.push_sector(track, sector)
             return
-
         m = rpm_re.search(line)
         if m:
             if self.motor_on:
@@ -172,7 +147,6 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
                 self.rpm_var.set(m.group(3))
                 self.update_estimate()
             return
-
         super().process_line(line)
 
 
