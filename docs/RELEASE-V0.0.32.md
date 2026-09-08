@@ -2,11 +2,13 @@
 
 ## Status
 
-V0.0.32 is the promoted release line derived from the hardware-tested V0.0.32-RC1 behavior.
+V0.0.32 is the hardware-tested stable release derived from the hardware-tested V0.0.32-RC1 behavior.
 
 The RC1 integration was exercised successfully on real Commodore 1541 hardware with the corrected GUI parser. Observed together were HOME anchoring, track/head/motor/write-protect/density state, physical-header RPM, live sector, recent-sector FIFO, raw PB7 SYNC/sec, and SYNC/revolution estimation.
 
-The final V0.0.32 source promotion intentionally changes release identity only. It preserves the selected hardware-tested runtime behavior from the RC1 path and keeps the T0.x and RC1 sources unchanged for provenance.
+The final V0.0.32 source promotion intentionally changed release identity only. It preserved the selected hardware-tested runtime behavior from the RC1 path and kept the T0.x and RC1 sources unchanged for provenance.
+
+The exact final V0.0.32 UF2 and final V0.0.32 GUI were then sanity-tested successfully on real Commodore 1541 hardware. The final release therefore passed both build validation and real-hardware validation.
 
 ## Final canonical paths
 
@@ -37,8 +39,14 @@ Artifacts:
 
 The build also reproduced the preserved T0.0.15 source baseline hashes before generating the final V0.0.32 source copies.
 
-## Promotion rule
+## Hardware validation
 
-The final V0.0.32 build has now been built and its hashes recorded. The remaining release gate is a short real-hardware sanity test of the exact final UF2 and final GUI before moving the stable branch and creating the `v0.0.32` tag.
+The exact final V0.0.32 build was flashed and tested on the real drive. The final GUI reported the V0.0.32 identity and the integrated monitor functions operated normally, including HOME anchoring, track/mechanism state, density, RPM, sector, recent-sector FIFO, SYNC/sec, and SYNC/revolution telemetry.
 
-No new functionality is introduced during this final identity promotion.
+This completed the final release gate.
+
+## Post-release direction
+
+Future work is intentionally outside V0.0.32. Planned development includes porting the desktop GUI to an LCD touchscreen and separately developing operator controls for IEC device-address changing and write-protect override.
+
+No new functionality was introduced during the final identity promotion.
