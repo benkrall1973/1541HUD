@@ -10,13 +10,17 @@ $ErrorActionPreference = "Stop"
 function Get-WslPath {
     param([Parameter(Mandatory=$true)][string]$WindowsPath)
     $path = $WindowsPath -replace '^Microsoft\.PowerShell\.Core\\FileSystem::',''
+    if ($path -match '^\\\\wsl(?:\$|\.localhost)\\[^\\]+\\(.*)$') {
+        $rest = $Matches[1] -replace '\\','/'
+        return "/" + $rest.TrimStart("/")
+    }
     $full = [System.IO.Path]::GetFullPath($path)
     if ($full -match '^([A-Za-z]):[\\/](.*)$') {
         $drive = $Matches[1].ToLowerInvariant()
         $rest = $Matches[2] -replace '\\','/'
         return "/mnt/$drive/$rest"
     }
-    throw "Could not convert Windows path to WSL path: $WindowsPath"
+    throw "Could not convert Windows or WSL path to WSL path: $WindowsPath"
 }
 
 function Quote-Bash {
@@ -39,7 +43,21 @@ if ([string]::IsNullOrWhiteSpace($OneRomCli)) {
         $OneRomCli = (Resolve-Path -LiteralPath $env:ONEROM_CLI).Path
     } else {
         $cmd = Get-Command onerom.exe -ErrorAction SilentlyContinue
-        if ($cmd) { $OneRomCli = $cmd.Source }
+        if ($cmd) {
+            $OneRomCli = $cmd.Source
+        } else {
+            $desktop = Join-Path $HOME "Desktop"
+            if (Test-Path -LiteralPath $desktop) {
+                $matches = Get-ChildItem -LiteralPath $desktop -Directory -Filter "onerom-cli-win-*" -ErrorAction SilentlyContinue | Sort-Object Name -Descending
+                foreach ($folder in $matches) {
+                    $candidate = Join-Path $folder.FullName "onerom.exe"
+                    if (Test-Path -LiteralPath $candidate) {
+                        $OneRomCli = (Resolve-Path -LiteralPath $candidate).Path
+                        break
+                    }
+                }
+            }
+        }
     }
 }
 if ([string]::IsNullOrWhiteSpace($OneRomCli)) { throw "Could not locate onerom.exe. Use -OneRomCli or ONEROM_CLI." }
