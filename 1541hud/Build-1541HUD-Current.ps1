@@ -8,14 +8,14 @@ $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $OneRomRepo = Join-Path $ProjectRoot "OneROM"
-$Builder = Join-Path $PSScriptRoot "Build-1541HUD-T011.ps1"
+$Builder = Join-Path $PSScriptRoot "Build-1541HUD-T015-SYNC-Input-Test.ps1"
 
 if (!(Test-Path -LiteralPath (Join-Path $OneRomRepo "firmware\ora\plugin.mk"))) {
     throw "OneROM build tree not found at: $OneRomRepo"
 }
 
 if (!(Test-Path -LiteralPath $Builder)) {
-    throw "T0.0.11 canonical builder not found at: $Builder"
+    throw "T0.0.15 current hardware-proven builder not found at: $Builder"
 }
 
 $builderParams = @{
