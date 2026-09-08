@@ -2,7 +2,7 @@
 
 This changelog tracks 1541HUD/DriveHUD project releases. The repository root `CHANGELOG.md` is retained as upstream OneROM history.
 
-## V0.0.32-RC1 - release candidate, not yet released
+## V0.0.32-RC1 - release candidate, hardware-tested
 
 Integrated release-candidate line built from the hardware-proven V0.0.30/V0.0.31 baseline plus the selected T0.x development results.
 
@@ -20,7 +20,11 @@ Included in RC1:
 - Explicit GUI warning when absolute track position has not yet been HOME-anchored after a ROM change/reset.
 - Dual-OneROM and complete passive-monitor wiring documentation.
 
-RC1 must be built and tested on real 1541 hardware before V0.0.32 is released. The tested RC commit, matching BIN/UF2 hashes, matching source copies, GUI, and screenshot should be preserved before promotion.
+The exact RC1 firmware and integrated GUI have now been exercised successfully on real Commodore 1541 hardware. Observed together in the RC GUI were HOME anchoring, track/head/motor/write-protect/density state, fresh physical-header RPM, live sector, populated recent-sector FIFO, raw PB7 SYNC/sec, and SYNC/revolution estimation. The RC telemetry parser regression found during first integration was corrected without changing the flashed firmware, and the corrected GUI restored the complete telemetry display.
+
+RC1 remains a release candidate until the final V0.0.32 promotion build and release audit are complete. The tested RC build hashes and source provenance are preserved separately in the repository documentation.
+
+Planned post-V0.0.32 work includes porting the desktop GUI to an LCD touchscreen and separately developing operator controls for IEC device-address changing and write-protect override. These are future control features and are not part of the passive RC1 monitor.
 
 ## v0.0.31 - 2026-09-05
 
