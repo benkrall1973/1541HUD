@@ -1,5 +1,6 @@
 import importlib.util
 import pathlib
+import re
 import tkinter as tk
 
 
@@ -10,6 +11,20 @@ if _SPEC is None or _SPEC.loader is None:
     raise ImportError(f"Could not load T0.0.18 GUI base from {_T018_PATH}")
 _T018 = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_T018)
+
+# RC1 firmware uses one unified visible identity for the telemetry added during
+# T0.0.11 through T0.0.15. Keep the proven T0.0.18 logic, but teach that module
+# to accept the release-candidate record names instead of the experimental IDs.
+_T018.rpm_re = re.compile(
+    r"RPM\s+V0\.0\.32-RC1\s+T=(\d+)\s+REV=(\d+)\s+RPM=(\d+\.\d{2})"
+)
+_T018.hdrphy_re = re.compile(
+    r"HDRPHY\s+V0\.0\.32-RC1\s+T=(\d+)\s+S=(\d+)\s+US=(\d+)"
+)
+_T018.sync_re = re.compile(
+    r"SYNC\s+V0\.0\.32-RC1\s+COUNT=(\d+)\s+LEVEL=([01])"
+)
+
 HUD1541RpmHoldTest = _T018.HUD1541RpmHoldTest
 
 
