@@ -28,9 +28,9 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
         one-off acquisition artifact without hiding a genuine spindle change.
       * Raw PB7/SYNC remains independent corroborating telemetry and is never a
         gate for accepting RPM.
-      * SYNC counting continues internally during seeks, but the visible
-        one-second SYNC value is suppressed until a complete post-seek window
-        can be considered representative of the settled track.
+      * SYNC counting continues internally during seeks. The first one-second
+        SYNC report after a seek is discarded because its window may overlap
+        multiple tracks/density zones; the next report is displayed immediately.
 
     This is intentionally a display/qualification experiment. It does not
     alter PIO, DMA, mailbox layout, physical SYNC counting, or T0.0.15 firmware.
@@ -40,7 +40,6 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
     CANDIDATE_AGREE_RPM = 1.50
     LARGE_RPM_JUMP = 5.00
     SEEK_SETTLE_SEC = 0.25
-    SYNC_SETTLE_SEC = 1.25
     DISPLAY_FIRMWARE = "T0.0.15"
 
     def __init__(self, root):
@@ -71,6 +70,7 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
         self.last_good_rpm = None
         self.latest_sync = None
         self.sync_display_valid = False
+        self.discard_next_sync_after_seek = False
         self.latest_hdr_track = None
         self.reacquiring = True
         self.candidate_rpm = None
@@ -161,14 +161,9 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
             return True
         return (time.monotonic() - self.last_seek_time) >= self.SEEK_SETTLE_SEC
 
-    def sync_window_is_settled(self):
-        if self.last_seek_time is None:
-            return True
-        return (time.monotonic() - self.last_seek_time) >= self.SYNC_SETTLE_SEC
-
     def update_sync_rev_estimate(self):
         # The one-second SYNC window and RPM sample are independent. During
-        # hold/reacquisition, or while the visible SYNC window is transitional,
+        # hold/reacquisition, or while the visible SYNC sample is transitional,
         # do not manufacture a misleading ratio.
         if (
             not self.motor_on
@@ -250,6 +245,7 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
             self.last_good_rpm = None
             self.latest_sync = None
             self.sync_display_valid = False
+            self.discard_next_sync_after_seek = False
             self.sync_var.set("0")
             self.latest_hdr_track = None
             self.reacquiring = True
@@ -270,27 +266,37 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
             self.sector_var.set("--")
             self.clear_sector_fifo()
 
-            # PB7/SYNC continues to be counted by firmware during the seek, but
-            # a one-second report that overlaps multiple tracks/density zones is
-            # not representative of any one settled track. Hide it until a full
-            # post-seek window has elapsed.
+            # The current firmware reports one-second PB7/SYNC windows. Any
+            # report overlapping this seek may contain multiple tracks or
+            # density zones, so discard exactly the first report after the
+            # final half-step. The next report is a full clean window and can
+            # be displayed without an arbitrary extra timer.
             self.sync_display_valid = False
+            self.discard_next_sync_after_seek = True
             self.sync_var.set("--")
             self.sync_rev_est_var.set("--.--")
 
     def process_line(self, line):
         m = sync_re.search(line)
         if m:
-            self.latest_sync = int(m.group(1))
+            raw_sync = int(m.group(1))
             if not self.motor_on:
+                self.latest_sync = None
                 self.sync_display_valid = False
+                self.discard_next_sync_after_seek = False
                 self.sync_var.set("0")
-            elif self.sync_window_is_settled():
+            elif self.discard_next_sync_after_seek:
+                # First post-seek report may be a mixed one-second window.
+                # Throw it away completely so neither SYNC/sec nor SYNC/rev
+                # can briefly present transitional garbage.
+                self.latest_sync = None
+                self.sync_display_valid = False
+                self.discard_next_sync_after_seek = False
+                self.sync_var.set("--")
+            else:
+                self.latest_sync = raw_sync
                 self.sync_display_valid = True
                 self.sync_var.set(m.group(1))
-            else:
-                self.sync_display_valid = False
-                self.sync_var.set("--")
             self.update_sync_rev_estimate()
             return
 
