@@ -4,7 +4,7 @@
 
 It uses **two OneROM Fire-24-E boards** installed in the 1541: one provides the selected drive ROM and the other runs the passive 1541HUD monitor. The monitor reports live drive state to a desktop GUI without taking control of the drive bus.
 
-The current Python desktop GUI is also the development reference for a planned **LCD touchscreen interface**. The touchscreen version is intended to bring the HUD onto the drive itself and, in later development, add operator controls including **IEC device-address changing** and **write-protect override**. Those control functions are future work and are not part of the passive V0.0.32 release candidate.
+The current Python desktop GUI is also the development reference for a planned **LCD touchscreen interface**. The touchscreen version is intended to bring the HUD onto the drive itself and, in later development, add operator controls including **IEC device-address changing** and **write-protect override**. Those control functions are future work and are not part of the passive V0.0.32 release.
 
 1541HUD currently monitors:
 
@@ -28,15 +28,13 @@ The monitoring path is designed to remain **passive**. The 1541 continues to exe
 
 ## Current Status
 
-**Stable release:** 1541HUD V0.0.31
+**Stable release:** 1541HUD V0.0.32
 
 **Immutable acquisition baseline:** V0.0.30
 
-**Current hardware-tested development stack:** T0.0.15 firmware with the T0.0.18 GUI.
+V0.0.32 integrates the selected hardware-tested T0.x development work under one release identity. The final V0.0.32 firmware and GUI were built from the promoted source and then sanity-tested successfully on real Commodore 1541 hardware. HOME anchoring, track/head/motor/write-protect/density state, physical-header RPM, live sector, recent-sector FIFO, raw PB7 SYNC/sec, and SYNC/revolution estimation were all confirmed operating in the final release build.
 
-**Current integrated release candidate:** V0.0.32-RC1. The exact RC1 build has now been run successfully on real 1541 hardware with the integrated GUI. Core telemetry, HOME anchoring, RPM, sector display, recent-sector FIFO, raw SYNC/sec, and SYNC/revolution estimation have all been observed operating together. Final release promotion remains separate from this RC qualification.
-
-The development stack combines several separately tested checkpoints:
+The development stack combined these checkpoints:
 
 - **T0.0.11** — physical-header RPM measurement
 - **T0.0.12** — live last-decoded physical sector display
@@ -49,7 +47,7 @@ The development stack combines several separately tested checkpoints:
 
 The T0.0.11 RPM checkpoint is preserved by the tag `rpm-t011-hardware-proven`.
 
-The T0.x line remains preserved development history rather than being rewritten as a stable release.
+The T0.x line remains preserved development history rather than being rewritten as stable releases.
 
 ---
 
@@ -124,16 +122,15 @@ T0.0.14 hardware testing proved that the monitor can decode UC2 using `/CS2` alo
 | GUI reconnect | Proven |
 | Late USB connection | Proven |
 | State resend/cache | Proven |
-| Physical-header RPM | Proven in T0.0.11 and integrated RC1 |
-| Last decoded physical sector | Proven in T0.0.12 and integrated RC1 |
-| Recent-sector FIFO | Proven in T0.0.13 and integrated RC1 |
-| `/CS2`-only UC2 decode | Proven in T0.0.14 |
-| Direct PB7/SYNC input | Proven in T0.0.15 and integrated RC1 |
-| Four-zone SYNC/rev behavior | Proven in T0.0.16 |
-| RPM outlier diagnosis using independent SYNC | Proven in T0.0.17 |
-| Seek-time RPM hold / qualified reacquisition | Hardware-tested in T0.0.18 |
-| Post-seek SYNC report-boundary cleanup | Hardware-tested in T0.0.18 |
-| Integrated V0.0.32-RC1 GUI/firmware telemetry | Hardware-tested |
+| Physical-header RPM | Proven |
+| Last decoded physical sector | Proven |
+| Recent-sector FIFO | Proven |
+| `/CS2`-only UC2 decode | Proven |
+| Direct PB7/SYNC input | Proven |
+| Four-zone SYNC/rev behavior | Proven |
+| RPM seek hold / qualified reacquisition | Proven |
+| Post-seek SYNC report-boundary cleanup | Proven |
+| Integrated V0.0.32 GUI/firmware telemetry | Proven |
 
 RPM measurement is event-driven by real disk-header decoding. Workloads that only move the head or motor may not generate a fresh RPM sample until physical header reads resume.
 
@@ -194,9 +191,7 @@ For 1541HUD firmware builds, use the project-facing wrappers:
 .\1541hud\Build-1541HUD-Current.ps1
 ```
 
-`Build-1541HUD-Stable.ps1` invokes the V0.0.31 canonical builder.
-
-`Build-1541HUD-Current.ps1` invokes the V0.0.32-RC1 integrated builder. The RC is derived from the hardware-tested T0.0.15 firmware path and T0.0.18 GUI behavior, while preserving the original T0.x sources.
+`Build-1541HUD-Current.ps1` invokes the final V0.0.32 canonical builder.
 
 Historical version-specific builders and experimental construction scripts remain preserved so source and test binaries stay traceable.
 
@@ -243,7 +238,7 @@ On a normally formatted disk the hardware-tested values are approximately:
 
 During a previously observed ~283 RPM display transient, raw D1 SYNC stayed near 180/sec. A real slowdown to ~283 RPM would have reduced that raw rate substantially. This independent measurement showed the transient came from HDRPHY reacquisition rather than the spindle actually slowing.
 
-T0.0.18 therefore keeps the last good RPM visible during seeks and accepts a new value only after fresh, mutually consistent post-seek samples. SYNC/sec is also withheld across the mixed one-second window immediately following a seek.
+The release GUI therefore keeps the last good RPM visible during seeks and accepts a new value only after fresh, mutually consistent post-seek samples. SYNC/sec is also withheld across the mixed one-second window immediately following a seek.
 
 Full design history: [`docs/RPM-DESIGN-AND-VALIDATION.md`](docs/RPM-DESIGN-AND-VALIDATION.md).
 
@@ -253,7 +248,7 @@ Full design history: [`docs/RPM-DESIGN-AND-VALIDATION.md`](docs/RPM-DESIGN-AND-V
 
 The monitor has been exercised with the original Commodore 1541 ROM, Epyx FastLoad activity, and JiffyDOS loading.
 
-A recent same-game comparison under the original ROM and JiffyDOS showed correct monitoring and successful loading under both. JiffyDOS completed the load faster. An initially incorrect displayed track range under JiffyDOS was resolved by physically homing the drive, confirming that the monitor needed a fresh Track-1 reference rather than indicating different disk data placement.
+A same-game comparison under the original ROM and JiffyDOS showed correct monitoring and successful loading under both. JiffyDOS completed the load faster. An initially incorrect displayed track range under JiffyDOS was resolved by physically homing the drive, confirming that the monitor needed a fresh Track-1 reference rather than indicating different disk data placement.
 
 This is why absolute track position should be treated as unanchored until HOME has been observed.
 
@@ -281,15 +276,15 @@ The IEC address-change and write-protect-override functions are intentionally li
 
 ### V0.0.30
 
-Immutable hardware-proven acquisition baseline. Do not rewrite or repurpose this version.
+Immutable hardware-proven acquisition baseline.
 
 ### V0.0.31
 
-Current stable 1541HUD rename baseline.
+1541HUD rename baseline.
 
-### V0.0.32-RC1
+### V0.0.32
 
-Integrated release candidate combining the selected hardware-tested T0.x functionality under one build and GUI identity. The integrated RC1 telemetry/display stack has now been exercised successfully on real 1541 hardware; final V0.0.32 promotion remains a separate release step.
+Current stable hardware-tested release. Integrates the proven track/mechanism monitor with physical-header RPM, live physical-sector display, recent-sector FIFO, `/CS2`-only UC2 decode, direct PB7/SYNC monitoring, four-zone SYNC/rev behavior, and seek-safe RPM/SYNC qualification.
 
 ### T0.x
 
