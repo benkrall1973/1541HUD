@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-$Gui = Join-Path $PSScriptRoot "gui\1541HUD_V0.0.32_RC1.py"
+$Gui = Join-Path $PSScriptRoot "gui\1541HUD_V0.0.32.py"
 if (!(Test-Path -LiteralPath $Gui)) {
     throw "Current 1541HUD GUI not found: $Gui"
 }
