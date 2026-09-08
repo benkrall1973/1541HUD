@@ -20,20 +20,20 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -f 1541hud/Build-1541HUD-V031.ps1
-          test -f 1541hud/gui/1541HUD_V0.0.31_PIO_DMA.py
-          test -f 1541hud/README.md
+          test -f 1541hud/Build-1541HUD-V0032.ps1
+          test -f 1541hud/gui/1541HUD_V0.0.32.py
           test -f 1541hud/CHANGELOG.md
-          test -f plugins/user/1541hud-probe/src/1541hud_probe_v031.c
-          test -f plugins/user/1541hud-probe/src/1541hud_mailbox.h
-          test -f plugins/system/usb/include/1541hud_mailbox.h
+          test -f README.md
+          test -f docs/RELEASE-V0.0.32.md
+          test -f OneROM/plugins/user/1541hud-probe/src/1541hud_mailbox.h
+          test -f OneROM/plugins/system/usb/include/1541hud_mailbox.h
 
-          cmp plugins/user/1541hud-probe/src/1541hud_mailbox.h \
-              plugins/system/usb/include/1541hud_mailbox.h
+          cmp OneROM/plugins/user/1541hud-probe/src/1541hud_mailbox.h \
+              OneROM/plugins/system/usb/include/1541hud_mailbox.h
 
-          grep -q 'HUD1541_PASSIVE_UB4' firmware/src/piodma/pio.c
-          grep -q 'HUD1541_PASSIVE_UB4' ci/build.sh
-          python3 -m py_compile 1541hud/gui/1541HUD_V0.0.31_PIO_DMA.py
+          grep -q 'HUD1541_PASSIVE_UB4' OneROM/firmware/src/piodma/pio.c
+          grep -q 'HUD1541_PASSIVE_UB4' OneROM/ci/build.sh
+          python3 -m py_compile 1541hud/gui/1541HUD_V0.0.32.py
 
           if git ls-files | grep -Ei '(^|/)(build-1541hud|build-drivehud|__pycache__)(/|$)|(\.bin$|\.uf2$|\.elf$|\.o$|\.pyc$)|pre_drivehud'; then
             echo 'Tracked generated artifact or obsolete backup found.' >&2
@@ -75,8 +75,9 @@ jobs:
 
           - This is a 1541HUD release, not an upstream OneROM release.
           - OneROM v0.7.1 source and history are retained as the firmware/build foundation.
-          - The monitor is intentionally passive and must not drive the Commodore 1541 bus.
+          - The V0.0.32 monitor path is intentionally passive and must not drive the Commodore 1541 bus.
           - Source releases are provided by the Git tag. Generated BIN/UF2 build products are not committed to the repository.
+          - Final V0.0.32 build hashes are recorded in docs/RELEASE-V0.0.32.md.
 
           ## Upstream attribution
 
