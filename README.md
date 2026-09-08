@@ -2,7 +2,7 @@
 
 **1541HUD** is a passive real-time monitor for the Commodore 1541 disk drive.
 
-It uses a **OneROM Fire-24-E** installed in the 1541 to observe drive activity and send live state to a desktop GUI without taking control of the drive bus.
+It uses **two OneROM Fire-24-E boards** installed in the 1541: one provides the selected drive ROM and the other runs the passive 1541HUD monitor. The monitor reports live drive state to a desktop GUI without taking control of the drive bus.
 
 1541HUD currently monitors:
 
@@ -32,6 +32,8 @@ The monitoring path is designed to remain **passive**. The 1541 continues to exe
 
 **Current hardware-tested development stack:** T0.0.15 firmware with the T0.0.18 GUI.
 
+**Current integrated release candidate:** V0.0.32-RC1. RC1 has been prepared from the proven development stack but is not considered hardware-proven until the exact RC1 build is tested on the real drive.
+
 The development stack combines several separately tested checkpoints:
 
 - **T0.0.11** — physical-header RPM measurement
@@ -45,18 +47,20 @@ The development stack combines several separately tested checkpoints:
 
 The T0.0.11 RPM checkpoint is preserved by the tag `rpm-t011-hardware-proven`.
 
-The T0.x line is still development work and has **not** been promoted to V0.0.32.
+The T0.x line remains development history and has not itself been relabeled as a stable release.
 
 ---
 
-## Hardware Architecture
+## Hardware Architecture and Installation
+
+1541HUD currently uses **two OneROM Fire-24-E boards** in the 1541:
 
 ```text
 Commodore 1541
      |
-     +-- UB3: normal ROM-serving OneROM
+     +-- UB3: OneROM serving the selected 1541 DOS ROM
      |
-     +-- UB4: passive 1541HUD monitor
+     +-- UB4: OneROM running the passive 1541HUD monitor
                   |
                   v
             RP2350 PIO/DMA
@@ -74,19 +78,30 @@ Commodore 1541
           Python desktop GUI
 ```
 
-The UB4 monitor observes 6502/VIA activity while UB3 continues to provide the selected drive ROM.
+The UB3 OneROM remains responsible for the selected drive ROM, such as the original Commodore ROM or JiffyDOS. UB4 is dedicated to monitoring.
 
-1541HUD does not replace the 1541 operating system and is not intended to become an IEC controller or active drive emulator.
+### Added physical wiring
 
-### Current extra signal
-
-The former UC2 CS1 monitor wire has been repurposed:
+The current installation uses these four monitor signal wires:
 
 ```text
-UC2 pin 17 (PB7 / SYNC) -> OneROM GPIO24
+UC4 pin 34  R/W       -> OneROM GPIO9
+UC4 pin 39  PHI2      -> OneROM GPIO8
+UC2 pin 23  /CS2      -> OneROM GPIO25
+UC2 pin 17  PB7/SYNC  -> OneROM GPIO24
 ```
 
-UC2 selection for the passive monitor has been hardware-tested using `/CS2` alone.
+The two OneROM boards are also linked by:
+
+```text
+UB4 pin 20            -> UB3 X1
+```
+
+T0.0.14 hardware testing proved that the monitor can decode UC2 using `/CS2` alone, allowing the former CS1 wire to be repurposed for the direct PB7/SYNC input on GPIO24.
+
+**Full installation details, GPIO mapping, HOME-reference notes, and safety information:** [`docs/HARDWARE-WIRING.md`](docs/HARDWARE-WIRING.md)
+
+1541HUD does not replace the 1541 operating system and is not intended to become an IEC controller or active drive emulator.
 
 ---
 
@@ -147,6 +162,7 @@ Important paths:
 | `1541hud/` | 1541HUD build scripts, GUI, release documentation and development artifacts |
 | `1541hud/gui/` | Python desktop monitor |
 | `1541hud/development/experiments/` | Preserved T0.0.x experimental construction and diagnostic scripts |
+| `docs/HARDWARE-WIRING.md` | Dual-OneROM installation and physical wiring |
 | `docs/RPM-DESIGN-AND-VALIDATION.md` | RPM/SYNC research, rejected approaches, implementation and hardware validation |
 | `OneROM/` | OneROM-derived firmware, plugins, Rust tooling, configuration, hardware support and provenance |
 | `OneROM/plugins/user/1541hud-probe/` | Passive 1541 acquisition and decoding plugin |
@@ -177,7 +193,7 @@ For 1541HUD firmware builds, use the project-facing wrappers:
 
 `Build-1541HUD-Stable.ps1` invokes the V0.0.31 canonical builder.
 
-`Build-1541HUD-Current.ps1` invokes the current T0.0.15 SYNC-enabled hardware-test builder. The T0.0.18 work is GUI-side qualification and therefore uses the T0.0.15 firmware image.
+`Build-1541HUD-Current.ps1` invokes the V0.0.32-RC1 integrated builder. The RC is derived from the hardware-tested T0.0.15 firmware path and T0.0.18 GUI behavior, while preserving the original T0.x sources.
 
 Historical version-specific builders and experimental construction scripts remain preserved so source and test binaries stay traceable.
 
@@ -247,7 +263,7 @@ This is why absolute track position should be treated as unanchored until HOME h
 
 Current candidate work includes:
 
-- **Release integration** — consolidate the proven T0.x firmware and GUI behavior into one clean release-candidate version with unified version identity.
+- **Release integration** — hardware-test V0.0.32-RC1 and promote only the exact tested source/build if it passes.
 - **Drive/DOS activity state** — expose useful job, command, error, or status information without taking control of the IEC bus.
 - **Compatibility testing** — continue testing JiffyDOS, DolphinDOS, SpeedDOS, Epyx FastLoad, and other loaders.
 - **Activity history and logging** — optionally record track movement, motor state, density, RPM, SYNC, and sector events for later analysis.
@@ -268,11 +284,13 @@ Immutable hardware-proven acquisition baseline. Do not rewrite or repurpose this
 
 Current stable 1541HUD rename baseline.
 
+### V0.0.32-RC1
+
+Integrated release candidate combining the selected hardware-tested T0.x functionality under one build and GUI identity. RC1 is not a stable release until the exact RC build is tested on real hardware.
+
 ### T0.x
 
-Development checkpoints used to isolate and hardware-test new functionality. They are not stable-release version numbers.
-
-The next integrated release should be created as a **new release candidate derived from the proven baseline plus selected T0.x features**, rather than rewriting V0.0.30 or simply relabeling an experimental binary.
+Development checkpoints used to isolate and hardware-test new functionality. They remain preserved development versions and are not rewritten as stable-release versions.
 
 ---
 
