@@ -22,8 +22,23 @@ The final builder generates and preserves:
 - `1541hud_probe_v0032_SOURCE.c`
 - `usb_main_v0032_SOURCE.c`
 
+## Final build validation
+
+The final V0.0.32 build completed successfully from the promoted source on the established Windows + WSL build environment.
+
+Artifacts:
+
+| Artifact | Size | SHA-256 |
+|---|---:|---|
+| `1541HUD_OneROM_V0.0.32.bin` | 204800 bytes | `4C2FECA86D06E178E0332B1558C4F03F398C8E7137A6C80F04BE440FCB96DD8B` |
+| `1541HUD_OneROM_V0.0.32.uf2` | 409600 bytes | `52AE4F8DA9720E316BA8A3FFF8CF10A4CF9DE325C8EC3588B49BE8394BF0CE1B` |
+| `1541hud_probe_v0032_SOURCE.c` | 22159 bytes | `757713C40E9598F2F140D50ABA8EA30BDD85EA390C1D1C33D7D230F29EA8C031` |
+| `usb_main_v0032_SOURCE.c` | 18214 bytes | `2831BC3E5375CD103D5B7497066BDD8FFCDCB69416DB59BFCFA29B7E773AD977` |
+
+The build also reproduced the preserved T0.0.15 source baseline hashes before generating the final V0.0.32 source copies.
+
 ## Promotion rule
 
-The final V0.0.32 build should be built once from the promoted source, its SHA-256 hashes recorded, and the exact UF2 given a short real-hardware sanity test before the `v0.0.32` tag is treated as the released hardware-tested artifact.
+The final V0.0.32 build has now been built and its hashes recorded. The remaining release gate is a short real-hardware sanity test of the exact final UF2 and final GUI before moving the stable branch and creating the `v0.0.32` tag.
 
 No new functionality is introduced during this final identity promotion.
