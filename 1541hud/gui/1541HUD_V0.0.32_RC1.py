@@ -1,7 +1,16 @@
-import re
+import importlib.util
+import pathlib
 import tkinter as tk
 
-from 1541HUD_T0.0.18_RPM_Hold_Qualification_Test import HUD1541RpmHoldTest
+
+_THIS_DIR = pathlib.Path(__file__).resolve().parent
+_T018_PATH = _THIS_DIR / "1541HUD_T0.0.18_RPM_Hold_Qualification_Test.py"
+_SPEC = importlib.util.spec_from_file_location("hud_t018", _T018_PATH)
+if _SPEC is None or _SPEC.loader is None:
+    raise ImportError(f"Could not load T0.0.18 GUI base from {_T018_PATH}")
+_T018 = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_T018)
+HUD1541RpmHoldTest = _T018.HUD1541RpmHoldTest
 
 
 class HUD1541V0032RC1(HUD1541RpmHoldTest):
