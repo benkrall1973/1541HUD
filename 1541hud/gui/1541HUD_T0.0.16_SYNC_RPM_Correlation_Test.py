@@ -16,23 +16,17 @@ sync_re = re.compile(
 
 
 class HUD1541SyncRpmCorrelationTest(_ProvenDriveHUDCore):
-    """T0.0.16 GUI-only correlation of raw PB7/SYNC rate and HDRPHY RPM.
-
-    Firmware remains the T0.0.15 SYNC input diagnostic.  The new value is:
-
-        SYNC/rev = (SYNC edges/second * 60) / physical-header RPM
-
-    This does not assume a fixed number of SYNC marks per revolution.  It is
-    intended to show whether the independent raw SYNC cadence remains stable
-    when the HDRPHY RPM estimator reports an unusual value.
-    """
+    """T0.0.16 GUI-only correlation of raw PB7/SYNC rate and HDRPHY RPM."""
 
     FIFO_SIZE = 10
 
     def __init__(self, root):
         super().__init__(root)
         self.root.title("1541HUD T0.0.16 - SYNC / RPM Correlation Test")
-        self.root.geometry("650x755")
+        # The proven core plus the new correlation rows exceeded the previous
+        # fixed height on Windows, clipping the FIFO row below the client area.
+        self.root.geometry("650x820")
+        self.root.minsize(650, 820)
 
         self.rpm_var = tk.StringVar(value="---.--")
         self.sector_var = tk.StringVar(value="--")
@@ -176,7 +170,6 @@ class HUD1541SyncRpmCorrelationTest(_ProvenDriveHUDCore):
         if delta in (1, 3):
             self.sector_var.set("--")
             self.clear_sector_fifo()
-            # Do not combine a pre-seek RPM sample with a post-seek SYNC rate.
             self.clear_correlation()
 
     def process_line(self, line):
@@ -185,7 +178,6 @@ class HUD1541SyncRpmCorrelationTest(_ProvenDriveHUDCore):
             self.latest_sync = int(m.group(1))
             self.sync_var.set(m.group(1))
             self.sync_level_var.set(m.group(2))
-            # Correlate only when a complete one-second SYNC window arrives.
             self.update_correlation_from_sync_window()
             return
 
@@ -203,8 +195,6 @@ class HUD1541SyncRpmCorrelationTest(_ProvenDriveHUDCore):
             if self.motor_on:
                 self.latest_rpm = float(m.group(3))
                 self.rpm_var.set(m.group(3))
-                # Wait for the next completed SYNC/SEC window before calculating
-                # SYNC/rev so the display is driven by a real raw-SYNC interval.
             return
 
         super().process_line(line)
