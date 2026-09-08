@@ -4,6 +4,8 @@
 
 It uses **two OneROM Fire-24-E boards** installed in the 1541: one provides the selected drive ROM and the other runs the passive 1541HUD monitor. The monitor reports live drive state to a desktop GUI without taking control of the drive bus.
 
+The current Python desktop GUI is also the development reference for a planned **LCD touchscreen interface**. The touchscreen version is intended to bring the HUD onto the drive itself and, in later development, add operator controls including **IEC device-address changing** and **write-protect override**. Those control functions are future work and are not part of the passive V0.0.32 release candidate.
+
 1541HUD currently monitors:
 
 - Track and half-track position
@@ -32,7 +34,7 @@ The monitoring path is designed to remain **passive**. The 1541 continues to exe
 
 **Current hardware-tested development stack:** T0.0.15 firmware with the T0.0.18 GUI.
 
-**Current integrated release candidate:** V0.0.32-RC1. RC1 has been prepared from the proven development stack but is not considered hardware-proven until the exact RC1 build is tested on the real drive.
+**Current integrated release candidate:** V0.0.32-RC1. The exact RC1 build has now been run successfully on real 1541 hardware with the integrated GUI. Core telemetry, HOME anchoring, RPM, sector display, recent-sector FIFO, raw SYNC/sec, and SYNC/revolution estimation have all been observed operating together. Final release promotion remains separate from this RC qualification.
 
 The development stack combines several separately tested checkpoints:
 
@@ -47,7 +49,7 @@ The development stack combines several separately tested checkpoints:
 
 The T0.0.11 RPM checkpoint is preserved by the tag `rpm-t011-hardware-proven`.
 
-The T0.x line remains development history and has not itself been relabeled as a stable release.
+The T0.x line remains preserved development history rather than being rewritten as a stable release.
 
 ---
 
@@ -101,7 +103,7 @@ T0.0.14 hardware testing proved that the monitor can decode UC2 using `/CS2` alo
 
 **Full installation details, GPIO mapping, HOME-reference notes, and safety information:** [`docs/HARDWARE-WIRING.md`](docs/HARDWARE-WIRING.md)
 
-1541HUD does not replace the 1541 operating system and is not intended to become an IEC controller or active drive emulator.
+1541HUD does not replace the 1541 operating system and the V0.0.32 monitor path remains passive. Future IEC address and write-protect controls will be developed as explicit operator-control features rather than silently folded into the passive monitor path.
 
 ---
 
@@ -122,15 +124,16 @@ T0.0.14 hardware testing proved that the monitor can decode UC2 using `/CS2` alo
 | GUI reconnect | Proven |
 | Late USB connection | Proven |
 | State resend/cache | Proven |
-| Physical-header RPM | Proven in T0.0.11 |
-| Last decoded physical sector | Proven in T0.0.12 |
-| Recent-sector FIFO | Proven in T0.0.13 |
+| Physical-header RPM | Proven in T0.0.11 and integrated RC1 |
+| Last decoded physical sector | Proven in T0.0.12 and integrated RC1 |
+| Recent-sector FIFO | Proven in T0.0.13 and integrated RC1 |
 | `/CS2`-only UC2 decode | Proven in T0.0.14 |
-| Direct PB7/SYNC input | Proven in T0.0.15 |
+| Direct PB7/SYNC input | Proven in T0.0.15 and integrated RC1 |
 | Four-zone SYNC/rev behavior | Proven in T0.0.16 |
 | RPM outlier diagnosis using independent SYNC | Proven in T0.0.17 |
 | Seek-time RPM hold / qualified reacquisition | Hardware-tested in T0.0.18 |
 | Post-seek SYNC report-boundary cleanup | Hardware-tested in T0.0.18 |
+| Integrated V0.0.32-RC1 GUI/firmware telemetry | Hardware-tested |
 
 RPM measurement is event-driven by real disk-header decoding. Workloads that only move the head or motor may not generate a fresh RPM sample until physical header reads resume.
 
@@ -209,10 +212,7 @@ Historical version-specific builders and experimental construction scripts remai
 
 This repository is **not the upstream OneROM project**, and it is not intended to present upstream OneROM work as original 1541HUD work.
 
-The original OneROM project remains the authoritative source for general OneROM development, hardware, documentation, and support:
-
-- OneROM website: https://onerom.org
-- Original OneROM repository: https://github.com/piersfinlayson/one-rom
+The original OneROM project remains the authoritative source for general OneROM development, hardware, documentation, and support.
 
 Additional provenance information is kept in [`OneROM/README.md`](OneROM/README.md).
 
@@ -261,16 +261,19 @@ This is why absolute track position should be treated as unanchored until HOME h
 
 ## Future Development
 
-Current candidate work includes:
+The next major interface goal is to **port the current desktop GUI to an LCD touchscreen** so the live 1541HUD display can become part of the physical drive installation rather than requiring a PC screen.
 
-- **Release integration** — hardware-test V0.0.32-RC1 and promote only the exact tested source/build if it passes.
-- **Drive/DOS activity state** — expose useful job, command, error, or status information without taking control of the IEC bus.
+Planned work includes:
+
+- **LCD touchscreen GUI** — reproduce the useful desktop HUD information on an integrated touch display.
+- **IEC device-address change** — provide an operator control for changing the 1541 IEC device address.
+- **Write-protect override** — provide an explicit operator-controlled write-protect override. This will require separate hardware/software design and validation before it is considered safe or supported.
+- **Drive/DOS activity state** — expose useful job, command, error, or status information where it can be observed safely.
 - **Compatibility testing** — continue testing JiffyDOS, DolphinDOS, SpeedDOS, Epyx FastLoad, and other loaders.
 - **Activity history and logging** — optionally record track movement, motor state, density, RPM, SYNC, and sector events for later analysis.
-- **GUI refinement** — keep the desktop display compact, readable, and explicit about HOME/track-reference validity.
 - **Simpler installation and releases** — package proven firmware, matching source, GUI, documentation, and build information so a tested version can be reproduced without reconstructing the development environment.
 
-New features remain experimental until they are tested on real 1541 hardware and shown not to interfere with normal drive operation.
+The IEC address-change and write-protect-override functions are intentionally listed as future **control** features. They are not claims about the passive V0.0.32 monitor and will not be treated as proven until separately implemented and tested on real hardware.
 
 ---
 
@@ -286,7 +289,7 @@ Current stable 1541HUD rename baseline.
 
 ### V0.0.32-RC1
 
-Integrated release candidate combining the selected hardware-tested T0.x functionality under one build and GUI identity. RC1 is not a stable release until the exact RC build is tested on real hardware.
+Integrated release candidate combining the selected hardware-tested T0.x functionality under one build and GUI identity. The integrated RC1 telemetry/display stack has now been exercised successfully on real 1541 hardware; final V0.0.32 promotion remains a separate release step.
 
 ### T0.x
 
