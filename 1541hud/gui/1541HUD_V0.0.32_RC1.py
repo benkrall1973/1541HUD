@@ -3,6 +3,8 @@ import pathlib
 import re
 import tkinter as tk
 
+import hud_core_v030 as _CORE
+
 
 _THIS_DIR = pathlib.Path(__file__).resolve().parent
 _T018_PATH = _THIS_DIR / "1541HUD_T0.0.18_RPM_Hold_Qualification_Test.py"
@@ -12,18 +14,31 @@ if _SPEC is None or _SPEC.loader is None:
 _T018 = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_T018)
 
-# RC1 firmware uses one unified visible identity for the telemetry added during
-# T0.0.11 through T0.0.15. Keep the proven T0.0.18 logic, but teach that module
-# to accept the release-candidate record names instead of the experimental IDs.
+# RC1 deliberately keeps the proven T0.0.18 runtime logic. During integration
+# the USB text identity was unified from the experimental T0.0.11/T0.0.15 names
+# to V0.0.32-RC1. Accept BOTH forms here so the RC GUI remains compatible with
+# the exact hardware-tested T0.0.15 image as well as the relabelled RC1 image.
+# This also makes the integration boundary tolerant of any queued/legacy text
+# records without changing the acquisition or qualification algorithms.
+_VERSION_RPM = r"(?:T0\.0\.11|V0\.0\.32-RC1)"
+_VERSION_SYNC = r"(?:T0\.0\.15|V0\.0\.32-RC1)"
+
 _T018.rpm_re = re.compile(
-    r"RPM\s+V0\.0\.32-RC1\s+T=(\d+)\s+REV=(\d+)\s+RPM=(\d+\.\d{2})"
+    rf"RPM\s+{_VERSION_RPM}\s+T=(\d+)\s+REV=(\d+)\s+RPM=(\d+\.\d{{2}})"
 )
 _T018.hdrphy_re = re.compile(
-    r"HDRPHY\s+V0\.0\.32-RC1\s+T=(\d+)\s+S=(\d+)\s+US=(\d+)"
+    rf"HDRPHY\s+{_VERSION_RPM}\s+T=(\d+)\s+S=(\d+)\s+US=(\d+)"
 )
 _T018.sync_re = re.compile(
-    r"SYNC\s+V0\.0\.32-RC1\s+COUNT=(\d+)\s+LEVEL=([01])"
+    rf"SYNC\s+{_VERSION_SYNC}\s+COUNT=(\d+)\s+LEVEL=([01])"
 )
+
+# The proven V0.0.30 core originally recognized only dotted version strings
+# such as V0.0.30. RC1 adds a suffix, so widen only the parser expressions used
+# by that inherited core. The core's track/motor/WP/density behavior itself is
+# untouched.
+_CORE.state_re = re.compile(r"STATE\s+(V[0-9.]+(?:-RC\d+)?)")
+_CORE.status_re = re.compile(r"STATUS\s+(V[0-9.]+(?:-RC\d+)?)")
 
 HUD1541RpmHoldTest = _T018.HUD1541RpmHoldTest
 
@@ -32,8 +47,9 @@ class HUD1541V0032RC1(HUD1541RpmHoldTest):
     """Integrated V0.0.32-RC1 GUI.
 
     Runtime behavior intentionally inherits the hardware-tested T0.0.18 GUI
-    unchanged. This wrapper only gives the integrated release candidate a
-    unified identity and makes HOME/reference validity explicit to the user.
+    unchanged. This wrapper provides the integrated release-candidate identity,
+    accepts both experimental and RC1 telemetry labels, and makes HOME/reference
+    validity explicit to the user.
     """
 
     DISPLAY_FIRMWARE = "V0.0.32-RC1"
@@ -60,9 +76,8 @@ class HUD1541V0032RC1(HUD1541RpmHoldTest):
                 "HOME: reference not confirmed - home drive after ROM change/reset"
             )
 
-        # T0.0.18 intentionally displayed the T0.0.15 experimental firmware
-        # identity. RC1 uses a matching integrated firmware build, so present
-        # the release-candidate identity instead.
+        # Keep one visible integrated-build identity even when the parser is
+        # accepting legacy experimental labels for compatibility.
         self.fw_var.set(f"Firmware: {self.DISPLAY_FIRMWARE}")
 
 
