@@ -4,6 +4,10 @@
 
 It uses **two OneROM Fire-24-E boards** installed in the 1541: one provides the selected drive ROM and the other runs the passive 1541HUD monitor. The monitor reports live drive state to a desktop GUI without taking control of the drive bus.
 
+## 1541HUD Live Monitor
+
+![1541HUD V0.0.32 live Commodore 1541 monitor](docs/images/1541HUD-V0.0.32-GUI.png)
+
 The current Python desktop GUI is also the development reference for a planned **LCD touchscreen interface**. The touchscreen version is intended to bring the HUD onto the drive itself and, in later development, add operator controls including **IEC device-address changing** and **write-protect override**. Those control functions are future work and are not part of the passive V0.0.32 release.
 
 1541HUD currently monitors:
