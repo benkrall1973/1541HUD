@@ -17,11 +17,22 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
     def __init__(self, root):
         super().__init__(root)
         self.root.title("1541HUD T0.0.17 - Clean SYNC / RPM Validation")
-        # Windows display scaling makes the inherited core taller than Tk's
-        # nominal geometry.  Reserve enough client height for the FIFO values,
-        # not merely the RECENT SECTORS heading.
-        self.root.geometry("700x960")
-        self.root.minsize(700, 960)
+
+        # The proven core packs its main body with expand=True because it was
+        # originally the last thing in a short window.  T0.0.17 appends more
+        # rows below it, so that expandable body creates a giant blank spacer.
+        # Disable expansion only in this derived test GUI.  The proven core
+        # source and behavior remain untouched.
+        core_children = self.root.winfo_children()
+        if len(core_children) >= 3:
+            core_body = core_children[2]
+            try:
+                core_body.pack_configure(fill="x", expand=False)
+            except tk.TclError:
+                pass
+
+        self.root.geometry("700x760")
+        self.root.minsize(700, 760)
 
         self.rpm_var = tk.StringVar(value="---.--")
         self.sector_var = tk.StringVar(value="--")
@@ -38,27 +49,27 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
         self._add_value_row("SECTOR", self.sector_var)
 
         sync_frame = ttk.Frame(self.root)
-        sync_frame.pack(fill="x", padx=18, pady=(0, 8))
+        sync_frame.pack(fill="x", padx=18, pady=(0, 6))
         ttk.Label(sync_frame, text="SYNC / SEC", font=("Segoe UI", 12, "bold")).pack(side="left", padx=(12, 28))
         ttk.Label(sync_frame, textvariable=self.sync_var, font=("Consolas", 22, "bold")).pack(side="left")
         ttk.Label(sync_frame, text="LEVEL", font=("Segoe UI", 10, "bold")).pack(side="left", padx=(28, 8))
         ttk.Label(sync_frame, textvariable=self.sync_level_var, font=("Consolas", 14, "bold")).pack(side="left")
 
         estimate_frame = ttk.Frame(self.root)
-        estimate_frame.pack(fill="x", padx=18, pady=(0, 6))
+        estimate_frame.pack(fill="x", padx=18, pady=(0, 4))
         ttk.Label(estimate_frame, text="SYNC / REV EST", font=("Segoe UI", 12, "bold")).pack(side="left", padx=(12, 18))
         ttk.Label(estimate_frame, textvariable=self.sync_rev_est_var, font=("Consolas", 22, "bold")).pack(side="left")
         ttk.Label(estimate_frame, text="1 s raw window / latest HDRPHY RPM", font=("Segoe UI", 9)).pack(side="left", padx=(14, 0))
 
         state_frame = ttk.Frame(self.root)
-        state_frame.pack(fill="x", padx=18, pady=(0, 10))
+        state_frame.pack(fill="x", padx=18, pady=(0, 6))
         ttk.Label(state_frame, text="CORRELATION", font=("Segoe UI", 10, "bold")).pack(side="left", padx=(12, 14))
         ttk.Label(state_frame, textvariable=self.status_var, font=("Consolas", 11, "bold")).pack(side="left")
 
         fifo_frame = ttk.LabelFrame(self.root, text="RECENT SECTORS")
-        fifo_frame.pack(fill="x", padx=30, pady=(6, 20), ipady=8)
+        fifo_frame.pack(fill="x", padx=30, pady=(4, 12), ipady=4)
         fifo_row = ttk.Frame(fifo_frame)
-        fifo_row.pack(fill="x", padx=10, pady=8)
+        fifo_row.pack(fill="x", padx=10, pady=6)
         self.fifo_vars = []
         for _ in range(self.FIFO_SIZE):
             var = tk.StringVar(value="")
@@ -67,7 +78,7 @@ class HUD1541SyncRevolutionTest(_ProvenDriveHUDCore):
 
     def _add_value_row(self, label, variable):
         frame = ttk.Frame(self.root)
-        frame.pack(fill="x", padx=18, pady=(0, 8))
+        frame.pack(fill="x", padx=18, pady=(0, 6))
         ttk.Label(frame, text=label, font=("Segoe UI", 12, "bold")).pack(side="left", padx=(12, 28))
         ttk.Label(frame, textvariable=variable, font=("Consolas", 22, "bold")).pack(side="left")
 
