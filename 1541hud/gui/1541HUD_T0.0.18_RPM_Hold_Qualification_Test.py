@@ -28,6 +28,9 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
         one-off acquisition artifact without hiding a genuine spindle change.
       * Raw PB7/SYNC remains independent corroborating telemetry and is never a
         gate for accepting RPM.
+      * SYNC counting continues internally during seeks, but the visible
+        one-second SYNC value is suppressed until a complete post-seek window
+        can be considered representative of the settled track.
 
     This is intentionally a display/qualification experiment. It does not
     alter PIO, DMA, mailbox layout, physical SYNC counting, or T0.0.15 firmware.
@@ -37,6 +40,7 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
     CANDIDATE_AGREE_RPM = 1.50
     LARGE_RPM_JUMP = 5.00
     SEEK_SETTLE_SEC = 0.25
+    SYNC_SETTLE_SEC = 1.25
     DISPLAY_FIRMWARE = "T0.0.15"
 
     def __init__(self, root):
@@ -66,6 +70,7 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
 
         self.last_good_rpm = None
         self.latest_sync = None
+        self.sync_display_valid = False
         self.latest_hdr_track = None
         self.reacquiring = True
         self.candidate_rpm = None
@@ -156,13 +161,19 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
             return True
         return (time.monotonic() - self.last_seek_time) >= self.SEEK_SETTLE_SEC
 
+    def sync_window_is_settled(self):
+        if self.last_seek_time is None:
+            return True
+        return (time.monotonic() - self.last_seek_time) >= self.SYNC_SETTLE_SEC
+
     def update_sync_rev_estimate(self):
         # The one-second SYNC window and RPM sample are independent. During
-        # hold/reacquisition the displayed RPM is deliberately stale, so do not
-        # manufacture a misleading ratio from old RPM and new SYNC telemetry.
+        # hold/reacquisition, or while the visible SYNC window is transitional,
+        # do not manufacture a misleading ratio.
         if (
             not self.motor_on
             or self.reacquiring
+            or not self.sync_display_valid
             or self.latest_sync is None
             or self.last_good_rpm is None
         ):
@@ -238,6 +249,8 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
             self.rpm_state_var.set("MOTOR OFF")
             self.last_good_rpm = None
             self.latest_sync = None
+            self.sync_display_valid = False
+            self.sync_var.set("0")
             self.latest_hdr_track = None
             self.reacquiring = True
             self.reset_candidate()
@@ -257,11 +270,27 @@ class HUD1541RpmHoldTest(_ProvenDriveHUDCore):
             self.sector_var.set("--")
             self.clear_sector_fifo()
 
+            # PB7/SYNC continues to be counted by firmware during the seek, but
+            # a one-second report that overlaps multiple tracks/density zones is
+            # not representative of any one settled track. Hide it until a full
+            # post-seek window has elapsed.
+            self.sync_display_valid = False
+            self.sync_var.set("--")
+            self.sync_rev_est_var.set("--.--")
+
     def process_line(self, line):
         m = sync_re.search(line)
         if m:
             self.latest_sync = int(m.group(1))
-            self.sync_var.set(m.group(1))
+            if not self.motor_on:
+                self.sync_display_valid = False
+                self.sync_var.set("0")
+            elif self.sync_window_is_settled():
+                self.sync_display_valid = True
+                self.sync_var.set(m.group(1))
+            else:
+                self.sync_display_valid = False
+                self.sync_var.set("--")
             self.update_sync_rev_estimate()
             return
 
