@@ -5,19 +5,21 @@ on:
   push:
     paths:
       - '1541hud/**'
-      - 'plugins/user/1541hud-probe/**'
-      - 'plugins/system/usb/**'
-      - 'firmware/src/piodma/pio.c'
-      - 'ci/build.sh'
+      - 'OneROM/plugins/user/1541hud-probe/**'
+      - 'OneROM/plugins/system/usb/**'
+      - 'OneROM/firmware/src/piodma/pio.c'
+      - 'OneROM/ci/build.sh'
+      - 'README.md'
       - '.github/workflows/1541hud-sanity.yml'
       - '.github/workflows/release.yml'
   pull_request:
     paths:
       - '1541hud/**'
-      - 'plugins/user/1541hud-probe/**'
-      - 'plugins/system/usb/**'
-      - 'firmware/src/piodma/pio.c'
-      - 'ci/build.sh'
+      - 'OneROM/plugins/user/1541hud-probe/**'
+      - 'OneROM/plugins/system/usb/**'
+      - 'OneROM/firmware/src/piodma/pio.c'
+      - 'OneROM/ci/build.sh'
+      - 'README.md'
       - '.github/workflows/1541hud-sanity.yml'
       - '.github/workflows/release.yml'
 
@@ -36,23 +38,24 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -f 1541hud/Build-1541HUD-V031.ps1
-          test -f 1541hud/gui/1541HUD_V0.0.31_PIO_DMA.py
-          test -f 1541hud/README.md
+          test -f 1541hud/Build-1541HUD-V0032.ps1
+          test -f 1541hud/Build-1541HUD-Current.ps1
+          test -f 1541hud/gui/1541HUD_V0.0.32.py
           test -f 1541hud/CHANGELOG.md
-          test -f plugins/user/1541hud-probe/src/1541hud_probe_v031.c
-          test -f plugins/user/1541hud-probe/src/1541hud_mailbox.h
-          test -f plugins/system/usb/include/1541hud_mailbox.h
+          test -f README.md
+          test -f docs/RELEASE-V0.0.32.md
+          test -f OneROM/plugins/user/1541hud-probe/src/1541hud_mailbox.h
+          test -f OneROM/plugins/system/usb/include/1541hud_mailbox.h
 
-          cmp plugins/user/1541hud-probe/src/1541hud_mailbox.h \
-              plugins/system/usb/include/1541hud_mailbox.h
+          cmp OneROM/plugins/user/1541hud-probe/src/1541hud_mailbox.h \
+              OneROM/plugins/system/usb/include/1541hud_mailbox.h
 
-          grep -q 'HUD1541_PASSIVE_UB4' firmware/src/piodma/pio.c
-          grep -q 'HUD1541_PASSIVE_UB4' ci/build.sh
-          grep -q '1541HUD V0.0.31' 1541hud/README.md
-          grep -q 'v0.0.31' 1541hud/CHANGELOG.md
+          grep -q 'HUD1541_PASSIVE_UB4' OneROM/firmware/src/piodma/pio.c
+          grep -q 'HUD1541_PASSIVE_UB4' OneROM/ci/build.sh
+          grep -q 'Stable release:.*V0.0.32' README.md
+          grep -q '## v0.0.32' 1541hud/CHANGELOG.md
 
-          python3 -m py_compile 1541hud/gui/1541HUD_V0.0.31_PIO_DMA.py
+          python3 -m py_compile 1541hud/gui/1541HUD_V0.0.32.py
 
           if grep -Rni --include='README.md' --include='*.py' --include='*.ps1' 'V0.0.31 candidate' 1541hud README.md; then
             echo 'Stale V0.0.31 candidate wording found.' >&2
