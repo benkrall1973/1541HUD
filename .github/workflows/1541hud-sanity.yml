@@ -62,7 +62,7 @@ jobs:
             exit 1
           fi
 
-          if git ls-files | grep -Ev '^1541hud/artifacts/' | grep -Ei '(^|/)(build-1541hud|build-drivehud|__pycache__)(/|$)|(\.bin$|\.uf2$|\.elf$|\.o$|\.pyc$)|pre_drivehud'; then
+          if git ls-files | grep -Ev '^1541hud/artifacts/' | grep -Ev '^OneROM/images/test/' | grep -Ei '(^|/)(build-1541hud|build-drivehud|__pycache__)(/|$)|(\.bin$|\.uf2$|\.elf$|\.o$|\.pyc$)|pre_drivehud'; then
             echo 'Tracked generated artifact or obsolete backup found.' >&2
             exit 1
           fi
