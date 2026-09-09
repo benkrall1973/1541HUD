@@ -35,7 +35,7 @@ jobs:
           grep -q 'HUD1541_PASSIVE_UB4' OneROM/ci/build.sh
           python3 -m py_compile 1541hud/gui/1541HUD_V0.0.32.py
 
-          if git ls-files | grep -Ei '(^|/)(build-1541hud|build-drivehud|__pycache__)(/|$)|(\.bin$|\.uf2$|\.elf$|\.o$|\.pyc$)|pre_drivehud'; then
+          if git ls-files | grep -Ev '^OneROM/images/test/' | grep -Ei '(^|/)(build-1541hud|build-drivehud|__pycache__)(/|$)|(\.bin$|\.uf2$|\.elf$|\.o$|\.pyc$)|pre_drivehud'; then
             echo 'Tracked generated artifact or obsolete backup found.' >&2
             exit 1
           fi
@@ -74,7 +74,7 @@ jobs:
           ## Project notes
 
           - This is a 1541HUD release, not an upstream OneROM release.
-          - OneROM v0.7.1 source and history are retained as the firmware/build foundation.
+          - OneROM v0.7.2 source and history are retained as the firmware/build foundation.
           - The V0.0.32 monitor path is intentionally passive and must not drive the Commodore 1541 bus.
           - Source releases are provided by the Git tag. Generated BIN/UF2 build products are not committed to the repository.
           - Final V0.0.32 build hashes are recorded in docs/RELEASE-V0.0.32.md.
