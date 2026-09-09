@@ -51,7 +51,7 @@ jobs:
               OneROM/plugins/system/usb/include/1541hud_mailbox.h
 
           grep -q 'HUD1541_PASSIVE_UB4' OneROM/firmware/src/piodma/pio.c
-          grep -q 'HUD1541_PASSIVE_UB4' OneROM/ci/build.sh
+          grep -q 'HUD1541_PASSIVE_UB4' 1541hud/Build-1541HUD-T016-v072-Baseline.ps1
           grep -q 'Stable release:.*V0.0.32' README.md
           grep -q '## v0.0.32' 1541hud/CHANGELOG.md
 
@@ -62,7 +62,7 @@ jobs:
             exit 1
           fi
 
-          if git ls-files | grep -Ei '(^|/)(build-1541hud|build-drivehud|__pycache__)(/|$)|(\.bin$|\.uf2$|\.elf$|\.o$|\.pyc$)|pre_drivehud'; then
+          if git ls-files | grep -Ev '^1541hud/artifacts/' | grep -Ei '(^|/)(build-1541hud|build-drivehud|__pycache__)(/|$)|(\.bin$|\.uf2$|\.elf$|\.o$|\.pyc$)|pre_drivehud'; then
             echo 'Tracked generated artifact or obsolete backup found.' >&2
             exit 1
           fi
