@@ -16,6 +16,9 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_DIR="${PROJECT_ROOT}/firmware/build"
 FIRMWARE_BIN="onerom-rp235x.bin"
 
+#
+# Display usage information and exit
+#
 usage() {
     echo "Usage: $0 <command> [args]"
     echo "Commands:"
@@ -25,12 +28,19 @@ usage() {
     exit 1
 }
 
+#
+# Remove the entire builds/ directory
+#
 clean_builds() {
     echo "Cleaning builds directory..."
     rm -rf "${PROJECT_ROOT}/builds"
     echo "Done."
 }
 
+#
+# Build firmware with retry
+# Returns: 0 on success, 1 on failure
+#
 build_firmware() {
     make clean-firmware-build > /dev/null 2>&1 || true
 
@@ -39,7 +49,7 @@ build_firmware() {
 
     while [[ $attempt -le $max_attempts ]]; do
         echo "  - Attempt ${attempt}: make firmware"
-        if make firmware EXTRA_C_FLAGS=-DHUD1541_PASSIVE_UB4 > /dev/null; then
+        if make firmware > /dev/null; then
             break
         fi
         attempt=$((attempt + 1))
@@ -57,6 +67,9 @@ build_firmware() {
     return 0
 }
 
+#
+# Main
+#
 main() {
     [[ $# -lt 1 ]] && usage
 
@@ -64,6 +77,7 @@ main() {
         clean)
             clean_builds
             ;;
+
         ci)
             cd "${PROJECT_ROOT}"
             echo "Performing initial clean..."
@@ -78,6 +92,7 @@ main() {
             cp "${BUILD_DIR}/${FIRMWARE_BIN}" "$ci_dir/"
             echo "CI build complete: ${ci_dir}/${FIRMWARE_BIN}"
             ;;
+
         release)
             [[ $# -ne 2 ]] && usage
             local version="$2"
@@ -102,6 +117,7 @@ main() {
 
             echo "Release ${version} complete: ${firmware_dir}"
             ;;
+
         *)
             usage
             ;;

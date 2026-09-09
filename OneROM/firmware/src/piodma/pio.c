@@ -18,12 +18,10 @@ int pio(void) {
     int rc;
 
 #if defined(HUD1541_PASSIVE_UB4)
-    // 1541HUD UB4 is a passive monitor. setup_initial_gpios() has already
-    // placed every GPIO in input-only mode (except board system LED pins).
-    // Do NOT call piorom2(): that would configure and enable the normal ROM
-    // serving state machines and could drive the 1541 data bus.
-    // Returning here lets vector.c launch the configured plugins while all
-    // ROM-socket/address/select/X GPIOs remain inputs.
+    // 1541HUD UB4 passive-monitor mode.  Preserve the hardware-proven V0.0.32
+    // safety rule on the clean OneROM v0.7.2 core: do not start the normal ROM
+    // serving PIO state machines, because UB4 must never drive the 1541 bus.
+    // setup_initial_gpios() has already left the ROM bus GPIOs as inputs.
     return 0;
 #endif
 
@@ -38,3 +36,4 @@ int pio(void) {
 
     return rc;
 }
+

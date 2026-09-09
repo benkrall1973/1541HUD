@@ -22,15 +22,16 @@ cargo fmt --all -- --check
 
 # Host crates: everything that builds for the host toolchain without the
 # firmware emulator.  These are linted together in one pass.  onerom-studio is
-# among them, and needs libudev/libusb present; its own workflow
-# (.github/workflows/build-studio.yml) only fires on rust/studio/** changes, so
-# linting it here is what catches a workspace-wide change that breaks it.
+# among them, and its own workflow (.github/workflows/build-studio.yml) only
+# fires on rust/studio/** changes, so linting it here is what catches a
+# workspace-wide change that breaks it.
 echo "Running clippy (host crates)..."
 cargo clippy \
     -p onerom-app \
     -p onerom-cli \
     -p onerom-config \
     -p onerom-database \
+    -p doc-gen \
     -p onerom-fw \
     -p fw-config-gen \
     -p onerom-fw-driver \
@@ -41,13 +42,14 @@ cargo clippy \
     -p onerom-protocol \
     -p onerom-studio \
     -p schema-gen \
-    --all-targets -- -D warnings -A clippy::chunks_exact_to_as_chunks
+    --all-targets -- -D warnings
 
 # onerom-fw-tester embeds the firmware emulator, so it needs CONFIG/BOARD, and
-# onerom-plugin-tester links against onerom-fw-tester's library.
-echo "Running clippy (onerom-fw-tester, onerom-plugin-tester)..."
+# onerom-rbcp-tester links against onerom-fw-tester's library.  onerom-plugin-tester
+# is the library the testers are built from, and comes in as their dependency.
+echo "Running clippy (onerom-fw-tester, onerom-rbcp-tester, onerom-usb-tester)..."
 CONFIG="$EMU_CONFIG" BOARD="$EMU_BOARD" \
-    cargo clippy -p onerom-fw-tester -p onerom-plugin-tester --all-targets -- -D warnings -A clippy::chunks_exact_to_as_chunks
+    cargo clippy -p onerom-fw-tester -p onerom-rbcp-tester -p onerom-usb-tester --all-targets -- -D warnings
 
 # onerom-lab pins its own nightly toolchain (rust-toolchain.toml) and is a
 # binary-only crate that builds for the RP2350 (thumbv8m via its
@@ -66,13 +68,20 @@ CONFIG="$EMU_CONFIG" BOARD="$EMU_BOARD" \
 echo "Running clippy (onerom-lab)..."
 ( cd lab \
     && rustup target add thumbv8m.main-none-eabihf \
-    && cargo clippy --no-deps --bins -- -D warnings -A clippy::chunks_exact_to_as_chunks )
+    && cargo clippy --no-deps --bins -- -D warnings )
 
 # onerom-fw-emulator and onerom-lens build for wasm (they compile the firmware
 # C to wasm via Emscripten), so they are linted against the wasm target.
 echo "Running clippy (wasm: onerom-fw-emulator, onerom-lens)..."
 CONFIG="$EMU_CONFIG" BOARD="$EMU_BOARD" \
     cargo clippy -p onerom-fw-emulator -p onerom-lens \
-    --target wasm32-unknown-emscripten -- -D warnings -A clippy::chunks_exact_to_as_chunks
+    --target wasm32-unknown-emscripten -- -D warnings
+
+# The Studio v2 prototypes are their own workspace, so a cargo command here does
+# not reach them.  Gated so they keep building as the crates they use move.
+echo "Linting the Studio v2 prototypes..."
+( cd ../prototypes/studiov2 \
+    && cargo fmt --all -- --check \
+    && cargo clippy --all-targets -- -D warnings )
 
 echo "Rust lint passed."

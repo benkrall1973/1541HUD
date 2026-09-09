@@ -1,0 +1,65 @@
+1541HUD T0.0.16 v0.7.2 baseline validation
+
+SOURCE / PORT VALIDATION
+PASS: clean OneROM v0.7.2 changelog
+PASS: UB4 passive safety hook
+PASS: T0.0.16 plugin min firmware v0.7.2
+PASS: T0.0.16 STATE identity
+PASS: T0.0.16 SYNC identity
+PASS: v0.7.2 USB uptime API
+PASS: v0.7.2 usb_log source retained
+PASS: V0.0.32 builder preserved
+PASS: V0.0.32 GUI preserved
+PASS: T0.0.16 GUI syntax check
+PASS: historical T0.0.18 GUI restored unchanged after T0.0.16-specific override
+
+HARDWARE VALIDATION — UB4 PASSIVE MONITOR
+PASS: drive boots normally
+PASS: directory access
+PASS: USB CDC telemetry
+PASS: authoritative STATE telemetry
+PASS: track / half-track
+PASS: HOME re-anchor at Track 1.0
+PASS: motor ON/OFF
+PASS: head IN/OUT, STALL and PARK behavior
+PASS: write protect
+PASS: density D0-D3
+PASS: physical header / sector decode
+PASS: RPM measurement (~300 RPM observed)
+PASS: RPM STATE reaches FRESH
+PASS: physical SYNC count
+PASS: SYNC/sec and SYNC/revolution estimate
+PASS: recent sector FIFO
+PASS: motor-off cleanup leaves RPM STATE at MOTOR OFF
+
+SCOPE LIMIT
+Hardware validation above applies only to the UB4 passive 1541HUD monitor.
+It does not validate future UB3 active-control/address-switching functions.
+
+REPRODUCIBILITY
+PASS: rebuild using builder default Arm GNU 15.3.rel1 toolchain completed successfully
+PASS: rebuilt BIN is byte-for-byte identical to hardware-tested BIN
+PASS: rebuilt UF2 is byte-for-byte identical to hardware-tested UF2
+PASS: archived plugin source matches canonical plugin source
+PASS: archived USB source matches canonical USB source
+
+TOOLCHAIN
+/opt/arm-gnu-toolchain-15.3.rel1/bin
+arm-none-eabi-gcc 15.3.1
+Old WSL GCC 10.3.1 is not suitable for the OneROM v0.7.2 linker layout.
+Git Bash PowerShell invocation requires MSYS_NO_PATHCONV=1 for /opt/... paths.
+
+SHA256 — CANONICAL SOURCE
+762773d2587f65593a5654beff1abf972ce46c4ed5122553400ae06dbc6b71b2  OneROM/firmware/src/piodma/pio.c
+443e979675bd1117176c56f9f487ebce075b629a15b0c341a0008cb959493738  OneROM/plugins/user/1541hud-probe/src/1541hud_probe_t016_v072_baseline.c
+d3d5c7c0a29d65eef539f94fbaa952045845ef712cbddc623977c97cf353869f  OneROM/plugins/system/usb/src/usb_main_t016_1541hud_baseline.c
+ac1aa68e1cf0d40b600e7b60337054e3dd0f556a3a280e7de28d33b4bab79f05  1541hud/Build-1541HUD-T016-v072-Baseline.ps1
+62d89ceea9c0dd77c326b3ab704a6d3d1578931cbd72ef6a8e6f3f075decc549  1541hud/gui/1541HUD_T0.0.16.py
+
+SHA256 — HARDWARE-TESTED ARTIFACTS
+f4486c04893bd17ef7fdcd1b049f33fc3012642ec105ce2403119f0a85f76678  1541hud/artifacts/T0.0.16/1541HUD_OneROM_T0.0.16_v0.7.2_Baseline.bin
+86a6866021903507fb3b03508fc914b2417eaa57880667ebae6e28d554b50445  1541hud/artifacts/T0.0.16/1541HUD_OneROM_T0.0.16_v0.7.2_Baseline.uf2
+
+SHA256 — ARCHIVED COMPANION SOURCE
+443e979675bd1117176c56f9f487ebce075b629a15b0c341a0008cb959493738  1541hud/artifacts/T0.0.16/1541hud_probe_t016_v072_baseline_SOURCE.c
+d3d5c7c0a29d65eef539f94fbaa952045845ef712cbddc623977c97cf353869f  1541hud/artifacts/T0.0.16/usb_main_t016_1541hud_baseline_SOURCE.c
