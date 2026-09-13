@@ -14,8 +14,8 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
 }
 
 # C64 PRG: 10 SYS2061.  It opens command channel 15 at device 8, writes this
-# nine-byte 1541 RAM routine to $0600, then executes it:
-#   LDA #new_address / STA $0077 / STA $0078 / RTS
+# eleven-byte 1541 RAM routine to $0600, then executes it:
+#   LDA #(new_address OR $20) / STA $0077 / LDA #(new_address OR $40) / STA $0078 / RTS
 # This is temporary RAM state only.  It does not write any OneROM slot, flash,
 # ROM image, IEC hardware strap, UB3 configuration, or nonvolatile drive data.
 $basicStub = [byte[]](
@@ -34,8 +34,9 @@ $machineCode = [byte[]](
 )
 
 $commandBytes = [byte[]](
-    0x4D, 0x2D, 0x57, 0x00, 0x06, 0x09,
-    0xA9, [byte]$NewAddress, 0x8D, 0x77, 0x00, 0x8D, 0x78, 0x00, 0x60, 0x0D,
+    0x4D, 0x2D, 0x57, 0x00, 0x06, 0x0B,
+    0xA9, [byte]($NewAddress -bor 0x20), 0x8D, 0x77, 0x00,
+    0xA9, [byte]($NewAddress -bor 0x40), 0x8D, 0x78, 0x00, 0x60, 0x0D,
     0x4D, 0x2D, 0x45, 0x00, 0x06, 0x0D
 )
 
