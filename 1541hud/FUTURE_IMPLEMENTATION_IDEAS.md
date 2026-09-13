@@ -2,33 +2,60 @@
 
 This is a planning document following the hardware-validated T0.0.19 diagnostic-log checkpoint. It is not a release plan and does not authorize changes to the proven passive PIO/DMA monitor path.
 
-## Recommended next feature
+## Confirmed architecture
 
-### GUI event history and diagnostic report
+- **UB4 / 1541HUD:** passive drive monitoring, GUI telemetry, diagnostics, and logs.
+- **UB3 / OneROM ROM service:** future ROM-based write-protect and IEC-address work.
+- These remain separate. 1541HUD must not send IEC commands or alter the proven UB4 monitor path.
 
-Add a GUI panel that records timestamped motor changes, accepted track changes, `HOME ANCHORED`, and write-protect changes. Pair it with a **Copy Diagnostic Report** button that copies firmware identity, connection state, current telemetry, health counters, and recent events to the clipboard.
+## Next implementation: T0.0.20 Read Session & Drive Health
 
-This makes T0.0.19's bounded diagnostic records useful during ordinary drive testing without modifying firmware capture behavior.
+Build the first useful operator feature entirely in the GUI. The firmware remains the validated T0.0.19 event-log build.
 
-## GUI and diagnostics
+### What it does
 
-- Persist a local GUI event history for motor start/stop, track changes, home anchors, and write-protect changes.
-- Export or save that history as plain text or CSV.
-- Add a session-health indicator: capture active, RPM fresh/stale, serial connection state, and any ring/queue-overflow warning.
-- Show a concise operational state: idle, reading, seeking, homing, stalled, or parked.
-- Mark values as fresh or cached after a reconnect.
+A **Start Session** button begins a timestamped observation window. During a normal directory read or disk operation, the GUI records:
+
+- motor start/stop and elapsed motor-on time;
+- accepted track changes and HOME anchors;
+- write-protect and density changes;
+- fresh/stale RPM, with current, average, minimum, maximum, and spread;
+- valid sector/SYNC activity and recent sectors;
+- connection/reconnection events;
+- any capture/ring/queue overflow status exposed by existing telemetry.
+
+A **Stop & Copy Report** button creates a short text report for clipboard/export. It reports what actually occurred; it never commands the drive.
+
+### Safety and UI behavior
+
+- **Start Session** is always safe: it only observes.
+- A session clearly shows **Idle**, **Reading**, **Seeking**, **Homing**, **Stalled**, or **Parked** as an inferred display state, never as an unverified firmware command state.
+- After reconnect, the GUI labels retained values **cached** until fresh telemetry arrives.
+- The screen stays touch-friendly so the same design can later run on the planned approximately 7-inch drive-top LCD.
+- The normal Windows GUI remains the full-detail development view.
+
+### First acceptance test
+
+1. Start a session with the drive idle.
+2. Read a directory from a known-good disk.
+3. Stop the session after the motor stops.
+4. Verify the report includes motor idle → active → idle, accepted track activity, plausible RPM around 300, sector/SYNC activity, and no overflow warning.
+5. Disconnect and reconnect once; verify the report marks the reconnection and returns to fresh telemetry.
+6. Repeat with the existing C64 track-cycle program to verify 18 → 25 → 35 → 1 and one HOME anchor.
+
+## Later GUI and diagnostics
+
+- Persist local event history and export it as plain text or CSV.
 - Add a compact hardware self-test/report that verifies passive capture, motor transitions, density changes, write protect, and SYNC without commanding the drive.
-
-## Measurement views
-
-- Add an RPM stability display: current, average, minimum, maximum, and deviation during a read.
 - Add a disk-zone summary that relates tracks 1–17, 18–24, 25–30, and 31–35 to expected density/SYNC behavior.
 - Offer optional native-log filtering: motor only, motor plus accepted track events, or all existing diagnostic records.
+- Add a drive-profile view for notes, expected RPM, observed density boundaries, and repeated trouble tracks.
+- Add bounded raw diagnostic capture (“next 10 seconds”) for difficult faults, saved as text/CSV rather than flooding the live log.
 
 ## Packaging and integration
 
 - Create a polished release package for the proven T0.0.19 diagnostic build, including BIN/UF2 hashes and a concise user test guide.
-- Later, consider a unified operator view with the separate IEC-controller project, while preserving the separation between passive mechanical telemetry and IEC bus functions.
+- Later, consider a unified operator view with the separate UB3/OneROM control device, while preserving the separation between passive mechanical telemetry and ROM/IEC functions.
 
 ## Guardrails
 
