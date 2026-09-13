@@ -12,7 +12,7 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
 # Program:
 # 10 OPEN15,8,15
 # 20 PRINT#15,"M-R"+CHR$(0)+CHR$(6)+CHR$(1)
-# 25 FORI=1TO100:NEXT
+# 25 FORI=1TO100:NEXTI
 # 30 GET#15,A$:PRINT LEN(A$)
 # 40 CLOSE15
 #
@@ -51,7 +51,7 @@ $PLUS   = 0xAA
 $lines = @(
     [pscustomobject]@{ N = 10; B = [byte[]]($OPEN,49,53,44,56,44,49,53) },
     [pscustomobject]@{ N = 20; B = [byte[]]($PRINTN,49,53,44,34,77,45,82,34,$PLUS,$CHR,40,48,41,$PLUS,$CHR,40,54,41,$PLUS,$CHR,40,49,41) },
-    [pscustomobject]@{ N = 25; B = [byte[]]($FOR,73,61,49,$TO,49,48,48,58,$NEXT) },
+    [pscustomobject]@{ N = 25; B = [byte[]]($FOR,73,61,49,$TO,49,48,48,58,$NEXT,73) },
     [pscustomobject]@{ N = 30; B = [byte[]]($GET,35,49,53,44,65,36,58,$PRINT,32,$LEN,40,65,36,41) },
     [pscustomobject]@{ N = 40; B = [byte[]]($CLOSE,49,53) }
 )
