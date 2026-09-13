@@ -42,10 +42,11 @@ $PRINT  = 0x99
 $PRINTN = 0x98
 $ASC    = 0xC6
 $CHR    = 0xC7
+$PLUS   = 0xAA
 
 $lines = @(
     [pscustomobject]@{ N = 10; B = [byte[]]($OPEN,49,53,44,56,44,49,53) },
-    [pscustomobject]@{ N = 20; B = [byte[]]($PRINTN,49,53,44,34,77,45,82,34,43,$CHR,40,48,41,43,$CHR,40,54,41,43,$CHR,40,49,41) },
+    [pscustomobject]@{ N = 20; B = [byte[]]($PRINTN,49,53,44,34,77,45,82,34,$PLUS,$CHR,40,48,41,$PLUS,$CHR,40,54,41,$PLUS,$CHR,40,49,41) },
     [pscustomobject]@{ N = 30; B = [byte[]]($GET,35,49,53,44,65,36,58,$PRINT,32,$ASC,40,65,36,41) },
     [pscustomobject]@{ N = 40; B = [byte[]]($CLOSE,49,53) }
 )
