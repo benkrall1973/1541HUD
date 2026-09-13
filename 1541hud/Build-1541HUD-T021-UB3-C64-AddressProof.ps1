@@ -42,7 +42,7 @@ $commandBytes = [byte[]](
 
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $outFile = Join-Path $OutputDirectory ("1541HUD_UB3_T0.0.21_Set_Address_8_to_{0}.prg" -f $NewAddress)
-[System.IO.File]::WriteAllBytes($outFile, $basicStub + $machineCode + $commandBytes)
+[System.IO.File]::WriteAllBytes($outFile, [byte[]](0x01, 0x08) + $basicStub + $machineCode + $commandBytes)
 
 Get-FileHash -Algorithm SHA256 $outFile
 Get-Item $outFile | Select-Object Name, Length, LastWriteTime
