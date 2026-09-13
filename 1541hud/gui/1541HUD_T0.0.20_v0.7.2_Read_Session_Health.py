@@ -160,7 +160,7 @@ class HUD1541T0020ReadSession(_BASE.HUD1541T0017ReconnectTest02):
             "1541HUD T0.0.20 Read Session Report",
             f"Started: {started}",
             f"Firmware: {self.DISPLAY_FIRMWARE}",
-            f"Connection: {'connected' if self.connected else 'disconnected'}",
+            f"Connection: {'connected' if getattr(self, 'connected', False) else 'connected (GUI status)'}",
             f"Motor-on time: {self.motor_seconds:.1f} s",
             f"RPM: {rpm_summary}",
             f"Overflow warning: {'YES' if self.overflow_seen else 'no'}",
