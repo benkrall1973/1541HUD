@@ -37,7 +37,7 @@ ORA_DEFINE_USER_PLUGIN(drivehud_probe_main, 0,0,19,0, 0,7,2);
 static const char t019_log_name[] = "1541HUD";
 static const char t019_motor_on[] = "1541HUD T0.0.19 EVENT MOTOR=1\r\n";
 static const char t019_motor_off[] = "1541HUD T0.0.19 EVENT MOTOR=0\r\n";
-static const char t019_home[] = "1541HUD T0.0.19 EVENT HOME=1\r\n";
+static const char t019_home[] = "1541HUD T0.0.19 EVENT HOME=ANCHORED\r\n";
 
 static uint32_t t019_track_record(char *out, uint8_t track) {
  static const char prefix[] = "1541HUD T0.0.19 EVENT TRACK=";
@@ -757,7 +757,10 @@ void drivehud_probe_main(ora_lookup_fn_t lookup,
    t019_home_latched = 1u;
    (void)t019_log_write(ORA_LOG_CHANNEL_0, t019_home,
                          (uint32_t)(sizeof(t019_home) - 1u));
-  } else if (track_write_valid && last_track_write != 1u) {
+  } else if (track_write_valid &&
+             last_track_write >= 2u && last_track_write <= 35u) {
+   /* Re-arm only after another plausible physical track. Invalid raw
+    * values (notably zero during DOS activity) cannot create a new home. */
    t019_home_latched = 0u;
   }
  }
