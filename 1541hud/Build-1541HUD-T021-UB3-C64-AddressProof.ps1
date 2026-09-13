@@ -3,10 +3,15 @@ param(
     [ValidateRange(8, 11)]
     [int]$NewAddress = 10,
 
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot "build-address-test")
+    [string]$OutputDirectory = ""
 )
 
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
+    $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $OutputDirectory = Join-Path $scriptDirectory "build-address-test"
+}
 
 # C64 PRG: 10 SYS2061.  It opens command channel 15 at device 8, writes this
 # seven-byte 1541 RAM routine to $0600, then executes it:
