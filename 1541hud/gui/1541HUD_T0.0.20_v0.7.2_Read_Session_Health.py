@@ -120,13 +120,17 @@ class HUD1541T0020ReadSession(_BASE.HUD1541T0017ReconnectTest02):
             self.motor_started = None
 
     def stop_and_copy(self):
-        if not self.session_active:
-            self.health_var.set("SESSION: no active session to copy")
+        # Make the action useful even if the session has just been stopped or
+        # the user presses it a second time: any collected events can always
+        # be rendered as a report.
+        if not self.session_active and not self.session_events:
+            self.health_var.set("SESSION: start a session first")
             return
-        self._finish_motor_time()
-        self.session_active = False
-        self.session_button.configure(text="Start Session")
-        self._append_event("session stopped")
+        if self.session_active:
+            self._finish_motor_time()
+            self.session_active = False
+            self.session_button.configure(text="Start Session")
+            self._append_event("session stopped")
         report = self.build_report()
 
         # The report must be visible even if Windows clipboard access is
