@@ -14,11 +14,18 @@ PATCHES = {
 }
 
 p = ArgumentParser()
-p.add_argument("source", type=Path, help="Pristine 8K JiffyDOS 1541 ROM")
+p.add_argument("source", type=Path, nargs="?", help="Pristine 8K JiffyDOS 1541 ROM (defaults to Downloads)")
 p.add_argument("--address", type=int, choices=PATCHES, required=True)
 p.add_argument("--output", type=Path, required=True)
 a = p.parse_args()
 
+if a.source is None:
+    downloads = Path.home() / "Downloads"
+    matches = sorted(downloads.glob("JiffyDOS-1541-6.00*.bin"))
+    if len(matches) != 1:
+        raise SystemExit(f"Expected exactly one JiffyDOS-1541-6.00*.bin in {downloads}; found {len(matches)}.")
+    a.source = matches[0]
+print("Source ROM    :", a.source)
 clean = a.source.read_bytes()
 if len(clean) != 8192:
     raise SystemExit("Refusing: source must be exactly 8192 bytes.")
