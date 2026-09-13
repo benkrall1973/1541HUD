@@ -598,7 +598,7 @@ void drivehud_probe_main(ora_lookup_fn_t lookup,
  uint8_t t019_log_ready = 0u;
  uint8_t t019_motor_valid = 0u, t019_last_motor = 0u;
  uint8_t t019_track_valid = 0u, t019_last_track = 0u;
- uint32_t t019_last_home_count = 0u;
+ uint8_t t019_home_latched = 0u;
  uint32_t t019_next_log_us;
  char t019_track_line[40];
  uint8_t phase_valid = 0u, motor_valid = 0u, wp_valid = 0u, density_valid = 0u;
@@ -753,10 +753,12 @@ void drivehud_probe_main(ora_lookup_fn_t lookup,
    len = t019_track_record(t019_track_line, last_track_write);
    (void)t019_log_write(ORA_LOG_CHANNEL_0, t019_track_line, len);
   }
-  if (m->home_count != t019_last_home_count) {
-   t019_last_home_count = m->home_count;
+  if (track_write_valid && last_track_write == 1u && !t019_home_latched) {
+   t019_home_latched = 1u;
    (void)t019_log_write(ORA_LOG_CHANNEL_0, t019_home,
                          (uint32_t)(sizeof(t019_home) - 1u));
+  } else if (track_write_valid && last_track_write != 1u) {
+   t019_home_latched = 0u;
   }
  }
  }
