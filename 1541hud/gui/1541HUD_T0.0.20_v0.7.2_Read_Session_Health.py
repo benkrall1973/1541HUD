@@ -126,12 +126,21 @@ class HUD1541T0020ReadSession(_BASE.HUD1541T0017ReconnectTest02):
         self._finish_motor_time()
         self.session_active = False
         self.session_button.configure(text="Start Session")
+        self._append_event("session stopped")
         report = self.build_report()
+
+        # The report must be visible even if Windows clipboard access is
+        # blocked or non-obvious. It replaces the event view until Start
+        # Session is pressed again, when that view is cleared for the next run.
+        self.event_text.configure(state="normal")
+        self.event_text.delete("1.0", "end")
+        self.event_text.insert("1.0", report)
+        self.event_text.configure(state="disabled")
+
         self.root.clipboard_clear()
         self.root.clipboard_append(report)
         self.root.update()
-        self._append_event("session stopped — report copied to clipboard")
-        self.health_var.set("SESSION: stopped — report copied")
+        self.health_var.set("SESSION: stopped — report shown and copied")
 
     def build_report(self):
         started = self.session_started.strftime("%Y-%m-%d %H:%M:%S") if self.session_started else "unknown"
