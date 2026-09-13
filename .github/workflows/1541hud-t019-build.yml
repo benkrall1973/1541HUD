@@ -1,0 +1,77 @@
+name: 1541HUD T0.0.19 Build
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - t0.0.18-v0.7.2-live-motor-log
+    paths:
+      - 'OneROM/plugins/user/1541hud-probe/**'
+      - 'OneROM/plugins/system/usb/**'
+      - 'OneROM/firmware/**'
+      - '1541hud/Build-1541HUD-T019-v072-EventLog.ps1'
+      - '.github/workflows/1541hud-t019-build.yml'
+
+# This workflow intentionally lives only on the T0.0.19 experiment branch.
+# It verifies everything we can verify without a physical 1541/OneROM:
+# passive base firmware, the exact T0.0.19 user-plugin source, and the preserved
+# v0.7.2 USB/1541HUD bridge with usb_log.c.
+
+defaults:
+  run:
+    working-directory: OneROM
+
+jobs:
+  build-t019:
+    name: Build passive firmware + T0.0.19 plugins
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make xz-utils python3
+
+      - name: Cache Arm GNU toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/arm-gnu-toolchain
+          key: arm-toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('OneROM/ci/arm-toolchain-version') }}
+
+      - name: Install Arm GNU toolchain
+        run: echo "TOOLCHAIN=$(ci/install-arm-toolchain.sh)" >> "$GITHUB_ENV"
+
+      - name: Build passive v0.7.2 base firmware
+        run: make firmware TOOLCHAIN="$TOOLCHAIN" EXTRA_C_FLAGS=-DHUD1541_PASSIVE_UB4
+
+      - name: Build T0.0.19 user plugin
+        run: |
+          make -C plugins/user/1541hud-probe clean
+          make -C plugins/user/1541hud-probe \
+            TOOLCHAIN="$TOOLCHAIN" \
+            PLUGIN_SRC=src/1541hud_probe_t019_v072_event_log.c
+
+      - name: Build preserved v0.7.2 USB bridge with native log drain
+        run: |
+          make -C plugins/system/usb clean
+          make -C plugins/system/usb \
+            TOOLCHAIN="$TOOLCHAIN" \
+            SRC="src/usb_descriptors.c src/usb_picobootx.c src/usb_rom.c src/usb_led.c src/usb_gpio.c src/usb_log.c src/usb_main_t016_1541hud_baseline.c"
+
+      - name: Record build products and source identities
+        run: |
+          set -euo pipefail
+          test -f firmware/build/onerom-rp235x.bin
+          test -f plugins/user/1541hud-probe/build/plugin_user.bin
+          test -f plugins/system/usb/build/usb_system_plugin.bin
+          sha256sum \
+            plugins/user/1541hud-probe/src/1541hud_probe_t019_v072_event_log.c \
+            plugins/user/1541hud-probe/src/1541hud_probe_t016_v072_baseline.c \
+            plugins/system/usb/src/usb_main_t016_1541hud_baseline.c \
+            firmware/build/onerom-rp235x.bin \
+            plugins/user/1541hud-probe/build/plugin_user.bin \
+            plugins/system/usb/build/usb_system_plugin.bin
