@@ -41,7 +41,7 @@ $readMarker = [byte[]](0x4D,0x2D,0x52,0xFF,0x06,0x01,0x0D)
 
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $outFile = Join-Path $OutputDirectory "1541HUD_UB3_T0.0.22_Drive_RAM_Proof.prg"
-[System.IO.File]::WriteAllBytes($outFile, $basicStub + $machineCode + $writeExecute + $readMarker)
+[System.IO.File]::WriteAllBytes($outFile, [byte[]](0x01, 0x08) + $basicStub + $machineCode + $writeExecute + $readMarker)
 
 Get-FileHash -Algorithm SHA256 $outFile
 Get-Item $outFile | Select-Object Name, Length, LastWriteTime
