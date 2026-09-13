@@ -52,21 +52,21 @@ class HUD1541T0020ReadSession(_BASE.HUD1541T0017ReconnectTest02):
         self.motor_seconds = 0.0
         self.overflow_seen = False
 
+        # The proven HUD widgets are inherited directly into root. Keep them
+        # in their existing compact left column, then place the new panel at
+        # the right within the same window.
+        root.geometry("1200x790")
+        root.minsize(1120, 730)
+        for child in root.pack_slaves():
+            child.pack_configure(fill="none", anchor="w")
         self._create_health_panel()
-        root.after(100, self._dock_health_panel_right)
 
     def _create_health_panel(self):
-        self.health_window = tk.Toplevel(self.root)
-        self.health_window.title("1541HUD — Session Report")
-        self.health_window.geometry("470x430")
-        self.health_window.minsize(420, 330)
-        self.health_window.protocol("WM_DELETE_WINDOW", self.health_window.withdraw)
+        controls = ttk.LabelFrame(self.root, text="READ SESSION / DRIVE HEALTH")
+        controls.place(x=730, y=92, width=445, height=670)
 
-        controls = ttk.LabelFrame(self.health_window, text="READ SESSION / DRIVE HEALTH")
-        controls.pack(fill="both", expand=True, padx=12, pady=12)
         row = ttk.Frame(controls)
         row.pack(fill="x", padx=10, pady=10)
-
         self.session_button = ttk.Button(row, text="Start Session", command=self.toggle_session)
         self.session_button.pack(side="left")
         self.copy_button = ttk.Button(row, text="Stop && Copy Report", command=self.stop_and_copy)
@@ -76,19 +76,11 @@ class HUD1541T0020ReadSession(_BASE.HUD1541T0017ReconnectTest02):
         ttk.Label(controls, textvariable=self.health_var, font=("Segoe UI", 10, "bold")).pack(
             anchor="w", padx=10, pady=(0, 8)
         )
-
         ttk.Label(controls, text="EVENTS", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=10)
         self.event_text = tk.Text(
-            controls, height=14, wrap="word", state="disabled", font=("Consolas", 9)
+            controls, height=25, wrap="word", state="disabled", font=("Consolas", 9)
         )
         self.event_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
-
-    def _dock_health_panel_right(self):
-        # Keep the compact proven HUD intact; its companion report window opens
-        # immediately to the right instead of extending below the fixed HUD.
-        x = self.root.winfo_rootx() + self.root.winfo_width() + 12
-        y = self.root.winfo_rooty()
-        self.health_window.geometry(f"+{x}+{y}")
 
     def _now_text(self):
         return datetime.now().strftime("%H:%M:%S")
