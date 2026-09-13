@@ -599,6 +599,7 @@ void drivehud_probe_main(ora_lookup_fn_t lookup,
  uint8_t t019_motor_valid = 0u, t019_last_motor = 0u;
  uint8_t t019_track_valid = 0u, t019_last_track = 0u;
  uint32_t t019_last_home_count = 0u;
+ uint32_t t019_next_log_us;
  char t019_track_line[40];
  uint8_t phase_valid = 0u, motor_valid = 0u, wp_valid = 0u, density_valid = 0u;
  uint8_t last_phase = 0u, last_motor = 0u, last_wp = 0u, last_density = 2u;
@@ -687,6 +688,7 @@ void drivehud_probe_main(ora_lookup_fn_t lookup,
      t019_log_open(ORA_LOG_CHANNEL_0, t019_log_name) == ORA_RESULT_OK) {
   t019_log_ready = 1u;
  }
+ t019_next_log_us = TIMER0_RAWL + 1000000u;
 
  while (1) {
  sync_poll(m, &sync_last_level, &sync_count, &sync_next_report_us);
@@ -733,7 +735,8 @@ void drivehud_probe_main(ora_lookup_fn_t lookup,
 
  /* Event-only, nonblocking native log. Values are compared after draining
   * samples; full/unavailable log channels are ignored with no retry. */
- if (t019_log_ready) {
+ if (t019_log_ready && (int32_t)(TIMER0_RAWL - t019_next_log_us) >= 0) {
+  t019_next_log_us = TIMER0_RAWL + 1000000u;
   if (!t019_motor_valid || m->last_motor != t019_last_motor) {
    t019_motor_valid = 1u;
    t019_last_motor = m->last_motor;
@@ -742,7 +745,8 @@ void drivehud_probe_main(ora_lookup_fn_t lookup,
     (m->last_motor != 0u) ? (uint32_t)(sizeof(t019_motor_on) - 1u)
                          : (uint32_t)(sizeof(t019_motor_off) - 1u));
   }
-  if (track_write_valid && (!t019_track_valid || last_track_write != t019_last_track)) {
+  if (track_write_valid && last_track_write >= 1u && last_track_write <= 35u &&
+      (!t019_track_valid || last_track_write != t019_last_track)) {
    uint32_t len;
    t019_track_valid = 1u;
    t019_last_track = last_track_write;
