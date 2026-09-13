@@ -47,7 +47,7 @@ Copy-Item $UsbSource $PreservedUsb -Force
 [byte[]]$bytes=New-Object byte[] 8192; for($i=0;$i -lt $bytes.Length;$i++){$bytes[$i]=0xFF}; [IO.File]::WriteAllBytes($Companion,$bytes)
 
 Write-Host "1541HUD T0.0.19 - OneROM v0.7.2 native event-log experiment"
-Write-Host "T0.0.16 monitor implementation remains unchanged; one motor snapshot per second is mirrored to native LOG_WRITE."
+Write-Host "T0.0.16 monitor implementation remains unchanged; native LOG_WRITE records are emitted only on decoded events."
 Write-Host "Building clean v0.7.2 passive base firmware..."
 & wsl bash -lc "cd $RepoQ && make firmware TOOLCHAIN=$ToolchainQ EXTRA_C_FLAGS=-DHUD1541_PASSIVE_UB4"
 if($LASTEXITCODE -ne 0){throw "v0.7.2 passive base firmware build failed"}
