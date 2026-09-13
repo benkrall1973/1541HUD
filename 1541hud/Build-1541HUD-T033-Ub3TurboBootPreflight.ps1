@@ -1,21 +1,16 @@
 # T0.0.33 — UB3 turbo_boot preflight
 #
-# Creates a copy of the exact configuration that originally programmed UB3,
-# adding only "turbo_boot": true. It never changes UB3 unless -Program is
-# explicitly supplied.
-#
-# turbo_boot makes One ROM ignore its SEL_A..SEL_D image-select jumpers at
-# UB3 boot and serve the first non-plugin ROM set (the Universal bootloader).
-# The existing Universal bootloader then performs its normal saved-ROM handoff.
-#
-# For the known 1541 selector JSON, USB and Host Control are supplied on the
-# program command line exactly as the configuration notes require.
+# Creates a copy of the UB3 selector configuration, adding only
+# "turbo_boot": true. It never changes UB3 unless -Program is supplied.
+# The generated configuration uses the local JiffyDOS file provided below.
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [string]$SourceConfig,
+
+    [string]$JiffyDosRom = "C:\Users\Admin\Downloads\JiffyDOS-1541-6.00.bin",
 
     [string]$OneRomCli = "C:\Users\Admin\Desktop\onerom-cli-win-0.3.0-x86_64\onerom.exe",
 
@@ -44,6 +39,24 @@ if (-not $setProperty -or @($setProperty.Value).Count -ne 8) {
     throw "Expected the eight-set UB3 selector configuration. Found $(@($setProperty.Value).Count) set(s). No file was written."
 }
 
+$jiffyPath = (Resolve-Path -LiteralPath $JiffyDosRom).Path
+$jiffyReplacements = 0
+foreach ($set in @($setProperty.Value)) {
+    $romList = $set.chips
+    if (-not $romList) {
+        $romList = $set.roms
+    }
+    foreach ($rom in @($romList)) {
+        if ([string]$rom.file -match '(?i)jiffydos-1541-6\.00\.bin$') {
+            $rom.file = $jiffyPath
+            $jiffyReplacements++
+        }
+    }
+}
+if ($jiffyReplacements -eq 0) {
+    throw "No JiffyDOS entries were found in SourceConfig. No file was written."
+}
+
 $existingTurbo = $config.PSObject.Properties["turbo_boot"]
 if ($existingTurbo) {
     $existingTurbo.Value = $true
@@ -68,6 +81,7 @@ Write-Host "Source config    : $sourcePath"
 Write-Host "Generated config : $generatedPath"
 Write-Host "ROM set count    : $setCount (preserved)"
 Write-Host "turbo_boot       : true"
+Write-Host "JiffyDOS entries : $jiffyReplacements -> $jiffyPath"
 Write-Host "Program plugins  : usb + host-control (preserved)"
 Write-Host "Source SHA256    : $sourceHash"
 Write-Host "Generated SHA256 : $generatedHash"
@@ -83,7 +97,7 @@ if (-not (Test-Path -LiteralPath $OneRomCli -PathType Leaf)) {
     throw "onerom.exe not found: $OneRomCli"
 }
 
-# Validate every local ROM path before any programming begins. Remote HTTP(S)
+# Validate every remaining local ROM path before programming. Remote HTTP(S)
 # paths are intentionally left to onerom.exe to retrieve.
 $missingFiles = [System.Collections.Generic.List[string]]::new()
 foreach ($set in @($setProperty.Value)) {
