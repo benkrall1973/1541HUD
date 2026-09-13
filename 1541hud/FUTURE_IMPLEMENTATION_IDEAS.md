@@ -43,6 +43,12 @@ A **Stop & Copy Report** button creates a short text report for clipboard/export
 5. Disconnect and reconnect once; verify the report marks the reconnection and returns to fresh telemetry.
 6. Repeat with the existing C64 track-cycle program to verify 18 → 25 → 35 → 1 and one HOME anchor.
 
+## T0.0.20 hardware result — 2026-09-13
+
+**PASS — GUI-only Read Session & Drive Health.** With the hardware-proven T0.0.19 EventLog firmware unchanged, the new single-window GUI recorded and rendered a normal track-cycle session. The report showed motor-on time **39.3 s**, RPM **300.41–300.60** (average **300.50**, spread **0.19**), accepted tracks **18 → 25 → 35 → 1**, one **HOME anchored**, and **no overflow warning**.
+
+The report now remains visible in the right-hand GUI panel when stopped and is also copied to the clipboard. No firmware, passive PIO/DMA path, UB3 ROM service, IEC, or write-protect behavior was changed.
+
 ## Later GUI and diagnostics
 
 - Persist local event history and export it as plain text or CSV.
