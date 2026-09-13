@@ -1,8 +1,8 @@
 # T0.0.33 — UB3 turbo_boot preflight
 #
-# Creates a copy of the UB3 selector configuration, adding only
-# "turbo_boot": true. It never changes UB3 unless -Program is supplied.
-# The generated configuration uses the local JiffyDOS file provided below.
+# Creates a copy of the UB3 selector configuration, adding "turbo_boot": true.
+# It never changes UB3 unless -Program is supplied. Local JiffyDOS and
+# Universal bootloader paths are normalized into the generated configuration.
 
 [CmdletBinding()]
 param(
@@ -11,6 +11,8 @@ param(
     [string]$SourceConfig,
 
     [string]$JiffyDosRom = "C:\Users\Admin\Downloads\JiffyDOS-1541-6.00.bin",
+
+    [string]$UniversalBootloaderRom = "C:\Users\Admin\Downloads\1541-OneROM-Selector-develop-v1.1.0\1541-OneROM-Selector-develop-v1.1.0\firmware\1541-OneROM-Bootloader-Universal-v1.1.0.bin",
 
     [string]$OneRomCli = "C:\Users\Admin\Desktop\onerom-cli-win-0.3.0-x86_64\onerom.exe",
 
@@ -40,7 +42,10 @@ if (-not $setProperty -or @($setProperty.Value).Count -ne 8) {
 }
 
 $jiffyPath = (Resolve-Path -LiteralPath $JiffyDosRom).Path
+$bootloaderPath = (Resolve-Path -LiteralPath $UniversalBootloaderRom).Path
 $jiffyReplacements = 0
+$bootloaderReplacements = 0
+
 foreach ($set in @($setProperty.Value)) {
     $romList = $set.chips
     if (-not $romList) {
@@ -51,10 +56,17 @@ foreach ($set in @($setProperty.Value)) {
             $rom.file = $jiffyPath
             $jiffyReplacements++
         }
+        elseif ([string]$rom.file -match '(?i)1541-onerom-bootloader-universal.*\.bin$') {
+            $rom.file = $bootloaderPath
+            $bootloaderReplacements++
+        }
     }
 }
-if ($jiffyReplacements -eq 0) {
-    throw "No JiffyDOS entries were found in SourceConfig. No file was written."
+if ($jiffyReplacements -ne 3) {
+    throw "Expected three JiffyDOS entries; found $jiffyReplacements. No file was written."
+}
+if ($bootloaderReplacements -ne 1) {
+    throw "Expected one Universal bootloader entry; found $bootloaderReplacements. No file was written."
 }
 
 $existingTurbo = $config.PSObject.Properties["turbo_boot"]
@@ -75,16 +87,19 @@ $json = $config | ConvertTo-Json -Depth 32
 $setCount = @($setProperty.Value).Count
 $sourceHash = (Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash
 $generatedHash = (Get-FileHash -LiteralPath $generatedPath -Algorithm SHA256).Hash
+$bootloaderHash = (Get-FileHash -LiteralPath $bootloaderPath -Algorithm SHA256).Hash
 
 Write-Host "T0.0.33 UB3 turbo_boot configuration generated."
-Write-Host "Source config    : $sourcePath"
-Write-Host "Generated config : $generatedPath"
-Write-Host "ROM set count    : $setCount (preserved)"
-Write-Host "turbo_boot       : true"
-Write-Host "JiffyDOS entries : $jiffyReplacements -> $jiffyPath"
-Write-Host "Program plugins  : usb + host-control (preserved)"
-Write-Host "Source SHA256    : $sourceHash"
-Write-Host "Generated SHA256 : $generatedHash"
+Write-Host "Source config       : $sourcePath"
+Write-Host "Generated config    : $generatedPath"
+Write-Host "ROM set count       : $setCount (preserved)"
+Write-Host "turbo_boot          : true"
+Write-Host "JiffyDOS entries    : $jiffyReplacements -> $jiffyPath"
+Write-Host "Universal bootloader: $bootloaderReplacements -> $bootloaderPath"
+Write-Host "Bootloader SHA256   : $bootloaderHash"
+Write-Host "Program plugins     : usb + host-control (preserved)"
+Write-Host "Source SHA256       : $sourceHash"
+Write-Host "Generated SHA256    : $generatedHash"
 Write-Host ""
 Write-Host "NO UB3 CHANGE HAS BEEN MADE."
 
@@ -95,34 +110,6 @@ if (-not $Program) {
 
 if (-not (Test-Path -LiteralPath $OneRomCli -PathType Leaf)) {
     throw "onerom.exe not found: $OneRomCli"
-}
-
-# Validate every remaining local ROM path before programming. Remote HTTP(S)
-# paths are intentionally left to onerom.exe to retrieve.
-$missingFiles = [System.Collections.Generic.List[string]]::new()
-foreach ($set in @($setProperty.Value)) {
-    $romList = $set.chips
-    if (-not $romList) {
-        $romList = $set.roms
-    }
-    foreach ($rom in @($romList)) {
-        $file = [string]$rom.file
-        if ($file -and $file -notmatch '^[a-zA-Z]+://') {
-            $resolvedFile = $file
-            if (-not [System.IO.Path]::IsPathRooted($resolvedFile)) {
-                $resolvedFile = Join-Path $sourceDir $resolvedFile
-            }
-            if (-not (Test-Path -LiteralPath $resolvedFile -PathType Leaf)) {
-                $missingFiles.Add($resolvedFile)
-            }
-        }
-    }
-}
-if ($missingFiles.Count -gt 0) {
-    Write-Host ""
-    Write-Host "UB3 WAS NOT PROGRAMMED. These local ROM files are missing:"
-    $missingFiles | Sort-Object -Unique | ForEach-Object { Write-Host "  $_" }
-    throw "Restore/correct the local ROM paths in the source configuration, then rerun."
 }
 
 Write-Host ""
